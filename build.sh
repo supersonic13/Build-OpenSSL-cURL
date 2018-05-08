@@ -10,8 +10,8 @@
 # EDIT this section to Select Versions #
 ########################################
 
-OPENSSL="1.0.2l"
-LIBCURL="7.54.1"
+OPENSSL="1.1.0g"
+LIBCURL="7.58.0"
 NGHTTP2="1.24.0"
 
 ########################################
@@ -19,6 +19,8 @@ NGHTTP2="1.24.0"
 # HTTP2 Support?
 NOHTTP2="/tmp/no-http2"
 rm -f $NOHTTP2
+
+set -o xtrace
 
 usage ()
 {
@@ -36,15 +38,17 @@ cd openssl
 ./openssl-build.sh "$OPENSSL"
 cd ..
 
-if [ "$1" == "-disable-http2" ]; then
-	touch "$NOHTTP2"
-	NGHTTP2="NONE"	
-else 
+exit
+
+if [ "$1" == "-enable-http2" ]; then
 	echo
 	echo "Building nghttp2 for HTTP2 support"
 	cd nghttp2
 	./nghttp2-build.sh "$NGHTTP2"
 	cd ..
+else 
+	touch "$NOHTTP2"
+	NGHTTP2="NONE"	
 fi
 
 echo
