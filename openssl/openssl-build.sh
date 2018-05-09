@@ -188,7 +188,7 @@ buildIOS "armv7"
 buildIOS "armv7s"
 buildIOS "arm64"
 buildIOS "x86_64"
-buildIOS "i386"
+#buildIOS "i386"
 
 #cp /tmp/${OPENSSL_VERSION}-x86_64/include/openssl/* iOS/include/openssl/
 cp /tmp/${OPENSSL_VERSION}-iOS-armv7/include/openssl/* iOS/include/openssl/
@@ -198,15 +198,18 @@ lipo \
 	"/tmp/${OPENSSL_VERSION}-iOS-armv7s/lib/libcrypto.a" \
 	"/tmp/${OPENSSL_VERSION}-iOS-arm64/lib/libcrypto.a" \
 	"/tmp/${OPENSSL_VERSION}-iOS-x86_64/lib/libcrypto.a" \
-	"/tmp/${OPENSSL_VERSION}-iOS-i386/lib/libcrypto.a" \
 	-create -output iOS/lib/libcrypto.a
+	
+#"/tmp/${OPENSSL_VERSION}-iOS-i386/lib/libcrypto.a" \
+
 lipo \
 	"/tmp/${OPENSSL_VERSION}-iOS-armv7/lib/libssl.a" \
 	"/tmp/${OPENSSL_VERSION}-iOS-armv7s/lib/libssl.a" \
 	"/tmp/${OPENSSL_VERSION}-iOS-arm64/lib/libssl.a" \
 	"/tmp/${OPENSSL_VERSION}-iOS-x86_64/lib/libssl.a" \
-	"/tmp/${OPENSSL_VERSION}-iOS-i386/lib/libssl.a" \
 	-create -output iOS/lib/libssl.a
+	
+#"/tmp/${OPENSSL_VERSION}-iOS-i386/lib/libssl.a" \
 
 }
 
@@ -218,7 +221,7 @@ mkdir -p tvOS/include/openssl/
 buildTVOS "arm64"
 buildTVOS "x86_64"
 
-cp /tmp/${OPENSSL_VERSION}-x86_64/include/openssl/* tvOS/include/openssl/
+cp /tmp/${OPENSSL_VERSION}-tvOS-arm64/include/openssl/* tvOS/include/openssl/
 
 lipo \
 	"/tmp/${OPENSSL_VERSION}-tvOS-arm64/lib/libcrypto.a" \
@@ -252,9 +255,9 @@ tar xfz "${OPENSSL_VERSION}.tar.gz"
 #buildMacLibsOnly
 
 
-buildIOSLibsOnly
+#buildIOSLibsOnly
 
-#buildTVOSLibsOnly
+buildTVOSLibsOnly
 
 echo "Cleaning up"
 #rm -rf /tmp/${OPENSSL_VERSION}-*
