@@ -90,7 +90,20 @@ buildMac()
 	export LDFLAGS="-arch ${ARCH} -L${OPENSSL}/Mac/lib ${NGHTTP2LIB}"
 	pushd . > /dev/null
 	cd "${CURL_VERSION}"
-	./configure -prefix="/tmp/${CURL_VERSION}-${ARCH}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/Mac ${NGHTTP2CFG} --host=${HOST} &> "/tmp/${CURL_VERSION}-${ARCH}.log"
+	./configure -prefix="/tmp/${CURL_VERSION}-${ARCH}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/Mac ${NGHTTP2CFG} --host=${HOST} \
+	          --enable-ipv6 \
+              --enable-threaded-resolver \
+              --disable-dict \
+              --disable-gopher \
+              --disable-ldap --disable-ldaps \
+              --disable-manual \
+              --disable-pop3 --disable-smtp --disable-imap \
+              --disable-rtsp \
+              --disable-shared \
+              --disable-smb \
+              --disable-telnet \
+              --disable-verbose \
+			  &> "/tmp/${CURL_VERSION}-${ARCH}.log"
 
 	make -j8 >> "/tmp/${CURL_VERSION}-${ARCH}.log" 2>&1
 	make install >> "/tmp/${CURL_VERSION}-${ARCH}.log" 2>&1

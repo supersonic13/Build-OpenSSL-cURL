@@ -158,7 +158,7 @@ buildAndroid()
 	./configure --prefix="/tmp/${CURL_VERSION}-Android-${ABI}" \
 			  --with-sysroot=${SYSROOT} \
          	  --host=${TOOL} \
-              --with-ssl=/usr \
+              --with-ssl=${OPENSSL}/openssl-${ABI} \
               --enable-ipv6 \
               --enable-static \
               --enable-threaded-resolver \
@@ -243,7 +243,7 @@ echo "Cleaning up"
 rm -rf /tmp/${CURL_VERSION}-*
 rm -rf ${CURL_VERSION}
 echo "Checking libraries"
-xcrun -sdk iphoneos lipo -info lib/*.a
+#xcrun -sdk iphoneos lipo -info lib/*.a
 
 #reset trap
 trap - INT TERM EXIT
