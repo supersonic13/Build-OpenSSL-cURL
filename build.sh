@@ -36,7 +36,11 @@ echo
 echo "Building OpenSSL"
 cd openssl 
 ./openssl-build.sh "$OPENSSL"
+
+./openssl-build-android.sh "$OPENSSL"
+
 cd ..
+
 
 if [ "$1" == "-enable-http2" ]; then
 	echo
@@ -53,6 +57,9 @@ echo
 echo "Building Curl"
 cd curl
 ./libcurl-build.sh "$LIBCURL"
+
+./libcurl-build-android.sh "$LIBCURL"
+
 cd ..
 
 echo 
@@ -72,6 +79,7 @@ ARCHIVE="archive/libcurl-$LIBCURL-openssl-$OPENSSL-nghttp2-$NGHTTP2"
 echo "Creating archive in $ARCHIVE..."
 mkdir -p "$ARCHIVE"
 cp curl/lib/*.a $ARCHIVE
+cp -r curl/Android $ARCHIVE/
 cp openssl/iOS/lib/libcrypto.a $ARCHIVE/libcrypto_iOS.a
 cp openssl/tvOS/lib/libcrypto.a $ARCHIVE/libcrypto_tvOS.a
 cp openssl/Mac/lib/libcrypto.a $ARCHIVE/libcrypto_Mac.a
