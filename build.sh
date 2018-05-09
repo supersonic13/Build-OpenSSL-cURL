@@ -38,8 +38,6 @@ cd openssl
 ./openssl-build.sh "$OPENSSL"
 cd ..
 
-exit
-
 if [ "$1" == "-enable-http2" ]; then
 	echo
 	echo "Building nghttp2 for HTTP2 support"

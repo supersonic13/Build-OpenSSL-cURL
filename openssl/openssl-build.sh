@@ -259,16 +259,15 @@ fi
 echo "Unpacking openssl"
 tar xfz "${OPENSSL_VERSION}.tar.gz"
 
-#buildMacLibsOnly
+buildMacLibsOnly
 
-
-#buildIOSLibsOnly
+buildIOSLibsOnly
 
 buildTVOSLibsOnly
 
 echo "Cleaning up"
-#rm -rf /tmp/${OPENSSL_VERSION}-*
-#rm -rf ${OPENSSL_VERSION}
+rm -rf /tmp/${OPENSSL_VERSION}-*
+rm -rf ${OPENSSL_VERSION}
 
 #reset trap
 trap - INT TERM EXIT

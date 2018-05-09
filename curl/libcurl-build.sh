@@ -15,6 +15,8 @@
 
 set -e
 
+set -o xtrace
+
 # set trap to help debug any build errors
 trap 'echo "** ERROR with Build - Check /tmp/curl*.log"; tail /tmp/curl*.log' INT TERM EXIT
 
@@ -31,7 +33,7 @@ fi
 
 if [ -z $2 ]; then
 	IOS_SDK_VERSION="" #"9.1"
-	IOS_MIN_SDK_VERSION="7.1"
+	IOS_MIN_SDK_VERSION="9.0"
 	
 	TVOS_SDK_VERSION="" #"9.0"
 	TVOS_MIN_SDK_VERSION="9.0"
@@ -207,6 +209,10 @@ fi
 echo "Unpacking curl"
 tar xfz "${CURL_VERSION}.tar.gz"
 
+buildMacLibsOnly()
+{
+
+
 echo "Building Mac libraries"
 buildMac "x86_64"
 
@@ -216,36 +222,48 @@ cp /tmp/${CURL_VERSION}-x86_64/include/curl/* include/curl/
 lipo \
 	"/tmp/${CURL_VERSION}-x86_64/lib/libcurl.a" \
 	-create -output lib/libcurl_Mac.a
+}
+
+buildIOSLibsOnly()
+{
+
 
 echo "Building iOS libraries (bitcode)"
 buildIOS "armv7" "bitcode"
 buildIOS "armv7s" "bitcode"
 buildIOS "arm64" "bitcode"
 buildIOS "x86_64" "bitcode"
-buildIOS "i386" "bitcode"
+#buildIOS "i386" "bitcode"
 
 lipo \
 	"/tmp/${CURL_VERSION}-iOS-armv7-bitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-armv7s-bitcode/lib/libcurl.a" \
-	"/tmp/${CURL_VERSION}-iOS-i386-bitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-arm64-bitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-x86_64-bitcode/lib/libcurl.a" \
 	-create -output lib/libcurl_iOS.a
+	
+#"/tmp/${CURL_VERSION}-iOS-i386-bitcode/lib/libcurl.a" \
 
 echo "Building iOS libraries (nobitcode)"
 buildIOS "armv7" "nobitcode"
 buildIOS "armv7s" "nobitcode"
 buildIOS "arm64" "nobitcode"
 buildIOS "x86_64" "nobitcode"
-buildIOS "i386" "nobitcode"
+#buildIOS "i386" "nobitcode"
 
 lipo \
 	"/tmp/${CURL_VERSION}-iOS-armv7-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-armv7s-nobitcode/lib/libcurl.a" \
-	"/tmp/${CURL_VERSION}-iOS-i386-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-arm64-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-x86_64-nobitcode/lib/libcurl.a" \
 	-create -output lib/libcurl_iOS_nobitcode.a
+	
+#"/tmp/${CURL_VERSION}-iOS-i386-nobitcode/lib/libcurl.a" \
+}
+
+buildTVOSLibsOnly()
+{
+
 
 echo "Building tvOS libraries (bitcode)"
 buildTVOS "arm64"
@@ -255,12 +273,16 @@ lipo \
 	"/tmp/${CURL_VERSION}-tvOS-arm64/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-tvOS-x86_64/lib/libcurl.a" \
 	-create -output lib/libcurl_tvOS.a
+}
 
+
+buildMacLibsOnly
+buildIOSLibsOnly
+buildTVOSLibsOnly
 
 echo "Cleaning up"
 rm -rf /tmp/${CURL_VERSION}-*
 rm -rf ${CURL_VERSION}
-
 echo "Checking libraries"
 xcrun -sdk iphoneos lipo -info lib/*.a
 
