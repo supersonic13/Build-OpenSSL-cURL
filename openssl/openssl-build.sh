@@ -24,31 +24,48 @@ trap 'echo "** ERROR with Build - Check /tmp/openssl*.log"; tail /tmp/openssl*.l
 
 usage ()
 {
-	echo "usage: $0 [openssl version] [iOS SDK version (defaults to latest)] [tvOS SDK version (defaults to latest)]"
+	echo "usage: $0 -v 1.0.2o"
 	trap - INT TERM EXIT
 	exit 127
 }
 
-if [ "$1" == "-h" ]; then
-	usage
-fi
+VER_NUMBER=""
 
-if [ -z $2 ]; then
-	IOS_SDK_VERSION="" #"9.1"
-	IOS_MIN_SDK_VERSION="9.0"
-	
-	TVOS_SDK_VERSION="" #"9.0"
-	TVOS_MIN_SDK_VERSION="9.0"
-else
-	IOS_SDK_VERSION=$2
-	TVOS_SDK_VERSION=$3
-fi
+while getopts "h?v:a:q" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+	v)	VER_NUMBER=$OPTARG
+		;;
+	a)	TARGET_ARCH=$OPTARG
+		;;
+    q)  verbose=0
+        ;;
+    esac
+done
 
-if [ -z $1 ]; then
+if [ "$VER_NUMBER" == "" ]; then
 	OPENSSL_VERSION="openssl-1.0.1t"
 else
-	OPENSSL_VERSION="openssl-$1"
+	OPENSSL_VERSION="openssl-$VER_NUMBER"
 fi
+
+IOS_SDK_VERSION="" #"9.1"
+IOS_MIN_SDK_VERSION="9.0"
+TVOS_SDK_VERSION="" #"9.0"
+TVOS_MIN_SDK_VERSION="9.0"
+
+#if [ -z $2 ]; then
+	#IOS_SDK_VERSION="" #"9.1"
+	#IOS_MIN_SDK_VERSION="9.0"
+	
+	#TVOS_SDK_VERSION="" #"9.0"
+	#TVOS_MIN_SDK_VERSION="9.0"
+#else
+	#IOS_SDK_VERSION=$2
+	#TVOS_SDK_VERSION=$3
+#fi
 
 DEVELOPER=`xcode-select -print-path`
 
@@ -273,6 +290,8 @@ echo "Checking OPENSSL Apple libraries"
 xcrun -sdk iphoneos lipo -info Mac/lib/*.a
 xcrun -sdk iphoneos lipo -info iOS/lib/*.a
 xcrun -sdk iphoneos lipo -info tvOS/lib/*.a
+
+## TODO : sed -i.bak '/include\s*.*openssl/s/[<>]/"/g;s/"openssl/"..\/openssl/g' *.h
 
 #reset trap
 trap - INT TERM EXIT

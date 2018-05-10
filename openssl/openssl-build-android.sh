@@ -22,29 +22,44 @@ set -o xtrace
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
+#export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
 ANDROID_API=${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
+#MAKE_EXE=${ANDROID_NDK}/prebuilt/darwin-x86_64/bin/make
+MAKE_EXE=make
 
 # set trap to help debug build errors
 trap 'echo "** ERROR with Build - Check /tmp/openssl*.log"; tail /tmp/openssl*.log' INT TERM EXIT
 
 usage ()
 {
-	echo "usage: $0 [openssl version]"
+	echo "usage: $0 -v 1.0.2o"
 	trap - INT TERM EXIT
 	exit 127
 }
 
-if [ "$1" == "-h" ]; then
-	usage
-fi
+VER_NUMBER=""
 
-if [ -z $1 ]; then
+while getopts "h?v:a:q" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+	v)	VER_NUMBER=$OPTARG
+		;;
+	a)	TARGET_ARCH=$OPTARG
+		;;
+    q)  verbose=0
+        ;;
+    esac
+done
+
+if [ "$VER_NUMBER" == "" ]; then
 	OPENSSL_VERSION="openssl-1.0.1t"
 else
-	OPENSSL_VERSION="openssl-$1"
+	OPENSSL_VERSION="openssl-$VER_NUMBER"
 fi
 
 configureAndroid()
@@ -148,22 +163,25 @@ buildAndroid()
 
 	## https://github.com/n8fr8/orbot/issues/92 - OpenSSL doesn't support compilation with clang (on Android) yet. You'll have to use GCC
 	#configureAndroid $ARCH $ABI "clang"
-	configureAndroid $ARCH $ABI
+	configureAndroid $ARCH $ABI 
 
 	if [[ $OPENSSL_VERSION != openssl-1.1.* ]]; then
-    	if [[ $ARCH == "android-armeabi" ]]; then
-        	ARCH="android-armv7"
-    	elif [[ $ARCH == "android64" ]]; then 
-        	ARCH="linux-x86_64 shared no-ssl2 no-ssl3 no-hw "
-    	elif [[ "$ARCH" == "android64-aarch64" ]]; then
-        	ARCH="android shared no-ssl2 no-ssl3 no-hw "
-    	fi
+		if [[ $ARCH == "android-armeabi" ]]; then
+			ARCH="android-armv7"
+		elif [[ $ARCH == "android64" ]]; then 
+			#ARCH="linux-x86_64 shared no-ssl2 no-ssl3 no-hw "
+			ARCH="linux-x86_64 no-ssl2 no-ssl3 no-hw "
+		elif [[ "$ARCH" == "android64-aarch64" ]]; then
+			#ARCH="android shared no-ssl2 no-ssl3 no-hw "
+			ARCH="android no-ssl2 no-ssl3 no-hw "
+		fi
 	fi
 
 	echo "Building ${OPENSSL_VERSION} for Android ${ARCH}"
 
 	./Configure $ARCH \
 			  --prefix="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
+			  --openssldir="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
               --with-zlib-include=$SYSROOT/usr/include \
               --with-zlib-lib=$SYSROOT/usr/lib \
               zlib \
@@ -173,12 +191,19 @@ buildAndroid()
 			  &> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log"
 	PATH=$TOOLCHAIN_PATH:$PATH
 
-	make clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	###
+	##
+	# Fix the makefile.
+	#perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile
 
-	if make -j4 >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1; then
-    	make install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-		#make install_ssldirs >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-		make clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+	if $MAKE_EXE -j4 >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1; then
+		$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+		$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	fi
 
 	popd > /dev/null
@@ -208,9 +233,9 @@ buildAndroidLibsOnly()
 	buildAndroid "android-armeabi" "armeabi-v7a"
 	buildAndroid "android64-aarch64" "arm64-v8a"
 	buildAndroid "android-x86" "x86"
-	buildAndroid "android-mips" "mips"
-	buildAndroid "android-mips64" "mips64"
 	buildAndroid "android64" "x86_64"
+	#buildAndroid "android-mips" "mips"
+	#buildAndroid "android-mips64" "mips64"
 }
 
 echo "Cleaning up"

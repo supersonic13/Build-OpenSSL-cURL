@@ -11,6 +11,7 @@
 ########################################
 
 OPENSSL="1.0.2o"
+OPENSSL_ANDROID=$OPENSSL
 LIBCURL="7.58.0"
 NGHTTP2="1.24.0"
 
@@ -20,29 +21,106 @@ NGHTTP2="1.24.0"
 NOHTTP2="/tmp/no-http2"
 rm -f $NOHTTP2
 
-set -o xtrace
-
 usage ()
 {
-        echo "usage: $0 [-disable-http2]"
+        #echo "usage: $0 [-disable-http2]"
+		echo "---- Build OpenSSL & cURL libraries for Apple/Android platforms ----
+-h -> help
+-l -> ssl/curl/<> If not specified, builds all
+-p -> android/tvos/ios/mac	-> the target platform
+-a -> target architure (not yet supported)
+-q -> quieter output
+example: ./<> -q -l ssl -p apple
+__________________________________________________________
+		"
         exit 127
 }
 
-if [ "$1" == "-h" ]; then
+
+BUILD_LIBS=""
+TARGET_PLATFORM=""
+TARGET_ARCH=""
+verbose=1
+
+BUILD_OPENSSL=1
+BUILD_CURL=1
+BUILD_HTTP2=0
+BUILD_FOR_APPLE=1
+BUILD_FOR_ANDROID=1
+
+while getopts "h?l:p:a:q" opt; do
+    case "$opt" in
+    h|\?)
         usage
+        ;;
+	l)	BUILD_LIBS=$OPTARG
+		;;
+	p)	TARGET_PLATFORM=$OPTARG
+		;;
+	a)	TARGET_ARCH=$OPTARG
+		;;
+    q)  verbose=0
+        ;;
+    esac
+done
+
+if [ "$BUILD_LIBS" == "curl" ]; then
+	BUILD_OPENSSL=0
+elif [ "$BUILD_LIBS" == "ssl" ]; then
+	BUILD_CURL=0
 fi
 
-echo
-echo "Building OpenSSL"
-cd openssl 
-./openssl-build.sh "$OPENSSL"
+if [ "$TARGET_PLATFORM" == "apple" ]; then
+	BUILD_FOR_ANDROID=0
+elif [ "$TARGET_PLATFORM" == "android" ]; then
+	BUILD_FOR_APPLE=0
+fi
 
-./openssl-build-android.sh "$OPENSSL"
+echo "_____________________________"
+echo "Summary : "
+if [ "$BUILD_FOR_APPLE" == 1 ];then
+	echo "Build for Apple"
+fi
+if [ "$BUILD_FOR_ANDROID" == 1 ];then
+	echo "Build for Android"
+fi
+if [ "$BUILD_OPENSSL" == 1 ];then
+	echo "Build Openssl"
+fi
+if [ "$BUILD_CURL" == 1 ];then
+	echo "Build cURL"
+fi
+echo "_____________________________"
 
-cd ..
+if [ "$verbose" == 1 ]; then
+	set -o xtrace
+fi
+
+if [ "$BUILD_OPENSSL" == 1 ];then	
+	echo
+	echo "________________"
+	echo "Building OpenSSL"
+	echo "________________"
+
+	cd openssl 
 
 
-if [ "$1" == "-enable-http2" ]; then
+	if [ "$BUILD_FOR_APPLE" == 1 ];then
+		echo "Building for Apple"
+		echo "-_-_-_-_-_-_-_-_-_"
+		./openssl-build.sh -v "$OPENSSL"
+	fi
+
+	if [ "$BUILD_FOR_ANDROID" == 1 ];then
+		echo "Building for Android"
+		echo "-_-_-_-_-_-_-_-_-_-_"
+		./openssl-build-android.sh -v "$OPENSSL_ANDROID"
+	fi
+
+	cd ..
+fi
+
+if [ "$BUILD_HTTP2" == 1 ];then	
 	echo
 	echo "Building nghttp2 for HTTP2 support"
 	cd nghttp2
@@ -53,59 +131,83 @@ else
 	NGHTTP2="NONE"	
 fi
 
-echo
-echo "Building Curl"
-cd curl
-./libcurl-build.sh "$LIBCURL"
+if [ "$BUILD_CURL" == 1 ];then
+	echo
+	echo "________________"
+	echo "Building Curl"
+	echo "________________"
 
-./libcurl-build-android.sh "$LIBCURL"
+	cd curl
 
-cd ..
+	if [ "$BUILD_FOR_APPLE" == 1 ];then
+		echo "Building for Apple"
+		echo "-_-_-_-_-_-_-_-_-_"
+		./libcurl-build.sh -v "$LIBCURL"
+	fi
 
-echo 
-echo "Libraries..."
-echo
-echo "openssl [$OPENSSL]"
-xcrun -sdk iphoneos lipo -info openssl/*/lib/*.a
-echo
-echo "nghttp2 (rename to libnghttp2.a) [$NGHTTP2]"
-xcrun -sdk iphoneos lipo -info nghttp2/lib/*.a
-echo
-echo "libcurl (rename to libcurl.a) [$LIBCURL]"
-xcrun -sdk iphoneos lipo -info curl/*/lib/*.a
+	if [ "$BUILD_FOR_ANDROID" == 1 ];then
+		echo "Building for Android"
+		echo "-_-_-_-_-_-_-_-_-_-_"
+		./libcurl-build-android.sh -v "$LIBCURL"
+	fi
+
+	cd ..
+fi
+
+if [ "$BUILD_FOR_APPLE" == 1 ];then
+	echo 
+	echo "Libraries..."
+	echo
+	echo "openssl [$OPENSSL]"
+	xcrun -sdk iphoneos lipo -info openssl/*/lib/*.a
+	echo
+	echo "nghttp2 (rename to libnghttp2.a) [$NGHTTP2]"
+	xcrun -sdk iphoneos lipo -info nghttp2/lib/*.a
+	echo
+	echo "libcurl (rename to libcurl.a) [$LIBCURL]"
+	xcrun -sdk iphoneos lipo -info curl/*/lib/*.a
+fi
 
 echo
 ARCHIVE="archive/libcurl-$LIBCURL-openssl-$OPENSSL-nghttp2-$NGHTTP2"
 echo "Creating archive in $ARCHIVE..."
 mkdir -p "$ARCHIVE"
-mkdir -p "$ARCHIVE/Android/curl"
-mkdir -p "$ARCHIVE/Android/openssl"
 
-mkdir -p "$ARCHIVE/Apple/curl"
-mkdir -p "$ARCHIVE/Apple/openssl"
+if [ "$BUILD_FOR_APPLE" == 1 ];then
+	mkdir -p "$ARCHIVE/Apple/curl"
+	mkdir -p "$ARCHIVE/Apple/openssl"
 
-cp curl/lib/*.a $ARCHIVE
-cp -r curl/Android/* $ARCHIVE/Android/curl/
-cp -r openssl/Android/* $ARCHIVE/Android/openssl/
+	cp -r curl/Mac $ARCHIVE/Apple/curl/
+	cp -r openssl/Mac $ARCHIVE/Apple/openssl/
+	cp -r curl/iOS $ARCHIVE/Apple/curl/
+	cp -r openssl/iOS $ARCHIVE/Apple/openssl/
+	cp -r curl/tvOS $ARCHIVE/Apple/curl/
+	cp -r openssl/tvOS $ARCHIVE/Apple/openssl/
+fi
 
-cp -r curl/Mac $ARCHIVE/Apple/curl/
-cp -r openssl/Mac $ARCHIVE/Apple/openssl/
-cp -r curl/iOS $ARCHIVE/Apple/curl/
-cp -r openssl/iOS $ARCHIVE/Apple/openssl/
-cp -r curl/tvOS $ARCHIVE/Apple/curl/
-cp -r openssl/tvOS $ARCHIVE/Apple/openssl/
+if [ "$BUILD_FOR_ANDROID" == 1 ];then
+	mkdir -p "$ARCHIVE/Android/curl"
+	mkdir -p "$ARCHIVE/Android/openssl"
 
-#cp openssl/iOS/lib/libcrypto.a $ARCHIVE/libcrypto_iOS.a
-#cp openssl/tvOS/lib/libcrypto.a $ARCHIVE/libcrypto_tvOS.a
-#cp openssl/Mac/lib/libcrypto.a $ARCHIVE/libcrypto_Mac.a
-#cp openssl/iOS/lib/libssl.a $ARCHIVE/libssl_iOS.a
-#cp openssl/tvOS/lib/libssl.a $ARCHIVE/libssl_tvOS.a
-#cp openssl/Mac/lib/libssl.a $ARCHIVE/libssl_Mac.a
-#cp nghttp2/lib/*.a $ARCHIVE
+	#cp curl/lib/*.a $ARCHIVE
+	if [ "$BUILD_CURL" == 1 ];then
+		cp -r curl/Android/* $ARCHIVE/Android/curl/
+	fi
+	if [ "$BUILD_OPENSSL" == 1 ];then
+		cp -r openssl/Android/* $ARCHIVE/Android/openssl/
+	fi
+fi
+
 echo "Archiving Mac binaries for curl and openssl..."
-mv /tmp/curl $ARCHIVE
-mv /tmp/openssl $ARCHIVE
-curl https://curl.haxx.se/ca/cacert.pem > $ARCHIVE/cacert.pem
-$ARCHIVE/curl -V
+if [ "$BUILD_CURL" == 1 ];then
+	mv /tmp/curl $ARCHIVE
+	curl https://curl.haxx.se/ca/cacert.pem > $ARCHIVE/cacert.pem
+	$ARCHIVE/curl -V
+fi
+
+
+if [ "$BUILD_FOR_ANDROID" == 1 ];then
+	mv /tmp/openssl $ARCHIVE
+fi
 
 rm -f $NOHTTP2

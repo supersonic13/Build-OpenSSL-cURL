@@ -30,19 +30,31 @@ trap 'echo "** ERROR with Build - Check /tmp/curl*.log"; tail /tmp/curl*.log' IN
 
 usage ()
 {
-	echo "usage: $0 [curl version] [iOS SDK version (defaults to latest)] [tvOS SDK version (defaults to latest)]"
+	echo "usage: $0 -v 7.50.1"
 	trap - INT TERM EXIT
 	exit 127
 }
 
-if [ "$1" == "-h" ]; then
-	usage
-fi
+VER_NUMBER=""
 
-if [ -z $1 ]; then
+while getopts "h?v:a:q" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+	v)	VER_NUMBER=$OPTARG
+		;;
+	a)	TARGET_ARCH=$OPTARG
+		;;
+    q)  verbose=0
+        ;;
+    esac
+done
+
+if [ "$VER_NUMBER" == "" ]; then
 	CURL_VERSION="curl-7.50.1"
 else
-	CURL_VERSION="curl-$1"
+	CURL_VERSION="curl-$VER_NUMBER"
 fi
 
 OPENSSL="${PWD}/../openssl/Android"
@@ -233,9 +245,9 @@ buildAndroidLibsOnly()
 	buildAndroid "android-armeabi" "armeabi-v7a"
 	buildAndroid "android64-aarch64" "arm64-v8a"
 	buildAndroid "android-x86" "x86"
-	buildAndroid "android-mips" "mips"
-	buildAndroid "android-mips64" "mips64"
 	buildAndroid "android64" "x86_64"
+	#buildAndroid "android-mips" "mips"
+	#buildAndroid "android-mips64" "mips64"
 }
 
 echo "Cleaning up"

@@ -27,26 +27,37 @@ usage ()
 	exit 127
 }
 
+VER_NUMBER=""
+
+while getopts "h?v:a:q" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+	v)	VER_NUMBER=$OPTARG
+		;;
+	a)	TARGET_ARCH=$OPTARG
+		;;
+    q)  verbose=0
+        ;;
+    esac
+done
+
+if [ "$VER_NUMBER" == "" ]; then
+	CURL_VERSION="openssl-1.0.1t"
+else
+	CURL_VERSION="openssl-$VER_NUMBER"
+fi
+
+
 if [ "$1" == "-h" ]; then
 	usage
 fi
 
-if [ -z $2 ]; then
-	IOS_SDK_VERSION="" #"9.1"
-	IOS_MIN_SDK_VERSION="9.0"
-	
-	TVOS_SDK_VERSION="" #"9.0"
-	TVOS_MIN_SDK_VERSION="9.0"
-else
-	IOS_SDK_VERSION=$2
-	TVOS_SDK_VERSION=$3
-fi
-
-if [ -z $1 ]; then
-	CURL_VERSION="curl-7.50.1"
-else
-	CURL_VERSION="curl-$1"
-fi
+IOS_SDK_VERSION="" #"9.1"
+IOS_MIN_SDK_VERSION="9.0"
+TVOS_SDK_VERSION="" #"9.0"
+TVOS_MIN_SDK_VERSION="9.0"
 
 OPENSSL="${PWD}/../openssl"  
 DEVELOPER=`xcode-select -print-path`
