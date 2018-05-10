@@ -1,0 +1,1 @@
+https://www.teskalabs.com/blog/openssl-binary-distribution-for-developers-static-library
