@@ -149,9 +149,35 @@ buildIOS()
 	echo "Building ${CURL_VERSION} for ${PLATFORM} ${IOS_SDK_VERSION} ${ARCH} ${BITCODE}"
 
 	if [[ "${ARCH}" == "arm64" ]]; then
-		./configure -prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} --host="arm-apple-darwin" &> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log"
+		./configure -prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} --host="arm-apple-darwin" \
+			--enable-ipv6 \
+			--enable-threaded-resolver \
+			--disable-dict \
+			--disable-gopher \
+			--disable-ldap --disable-ldaps \
+			--disable-manual \
+			--disable-pop3 --disable-smtp --disable-imap \
+			--disable-rtsp \
+			--disable-shared \
+			--disable-smb \
+			--disable-telnet \
+			--disable-verbose \
+			&> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log"
 	else
-		./configure -prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} --host="${ARCH}-apple-darwin" &> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log"
+		./configure -prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} --host="${ARCH}-apple-darwin" \
+			--enable-ipv6 \
+			--enable-threaded-resolver \
+			--disable-dict \
+			--disable-gopher \
+			--disable-ldap --disable-ldaps \
+			--disable-manual \
+			--disable-pop3 --disable-smtp --disable-imap \
+			--disable-rtsp \
+			--disable-shared \
+			--disable-smb \
+			--disable-telnet \
+			--disable-verbose \
+			&> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log"
 	fi
 
 	make -j8 >> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log" 2>&1
@@ -189,7 +215,20 @@ buildTVOS()
    
 	echo "Building ${CURL_VERSION} for ${PLATFORM} ${TVOS_SDK_VERSION} ${ARCH}"
 
-	./configure -prefix="/tmp/${CURL_VERSION}-tvOS-${ARCH}" --host="arm-apple-darwin" -disable-shared -with-random=/dev/urandom --disable-ntlm-wb --with-ssl="${OPENSSL}/tvOS" ${NGHTTP2CFG} &> "/tmp/${CURL_VERSION}-tvOS-${ARCH}.log"
+	./configure -prefix="/tmp/${CURL_VERSION}-tvOS-${ARCH}" --host="arm-apple-darwin" -disable-shared -with-random=/dev/urandom --disable-ntlm-wb --with-ssl="${OPENSSL}/tvOS" ${NGHTTP2CFG} \
+			--enable-ipv6 \
+			--enable-threaded-resolver \
+			--disable-dict \
+			--disable-gopher \
+			--disable-ldap --disable-ldaps \
+			--disable-manual \
+			--disable-pop3 --disable-smtp --disable-imap \
+			--disable-rtsp \
+			--disable-shared \
+			--disable-smb \
+			--disable-telnet \
+			--disable-verbose \
+			&> "/tmp/${CURL_VERSION}-tvOS-${ARCH}.log"
 
 	# Patch to not use fork() since it's not available on tvOS
         LANG=C sed -i -- 's/define HAVE_FORK 1/define HAVE_FORK 0/' "./lib/curl_config.h"
@@ -225,21 +264,27 @@ tar xfz "${CURL_VERSION}.tar.gz"
 buildMacLibsOnly()
 {
 
+mkdir -p Mac/lib
+mkdir -p Mac/include/curl/
 
 echo "Building Mac libraries"
 buildMac "x86_64"
+
+cp /tmp/${CURL_VERSION}-x86_64/include/curl/* Mac/include/curl/
 
 echo "Copying headers"
 cp /tmp/${CURL_VERSION}-x86_64/include/curl/* include/curl/
 
 lipo \
 	"/tmp/${CURL_VERSION}-x86_64/lib/libcurl.a" \
-	-create -output lib/libcurl_Mac.a
+	-create -output Mac/lib/libcurl.a
 }
 
 buildIOSLibsOnly()
 {
 
+mkdir -p iOS/lib
+mkdir -p iOS/include/curl/
 
 echo "Building iOS libraries (bitcode)"
 buildIOS "armv7" "bitcode"
@@ -248,12 +293,14 @@ buildIOS "arm64" "bitcode"
 buildIOS "x86_64" "bitcode"
 #buildIOS "i386" "bitcode"
 
+cp /tmp/${CURL_VERSION}-iOS-x86_64-bitcode/include/curl/* iOS/include/curl/
+
 lipo \
 	"/tmp/${CURL_VERSION}-iOS-armv7-bitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-armv7s-bitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-arm64-bitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-x86_64-bitcode/lib/libcurl.a" \
-	-create -output lib/libcurl_iOS.a
+	-create -output iOS/lib/libcurl.a
 	
 #"/tmp/${CURL_VERSION}-iOS-i386-bitcode/lib/libcurl.a" \
 
@@ -269,23 +316,26 @@ lipo \
 	"/tmp/${CURL_VERSION}-iOS-armv7s-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-arm64-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-x86_64-nobitcode/lib/libcurl.a" \
-	-create -output lib/libcurl_iOS_nobitcode.a
+	-create -output iOS/lib/libcurl_nobitcode.a
 	
 #"/tmp/${CURL_VERSION}-iOS-i386-nobitcode/lib/libcurl.a" \
 }
 
 buildTVOSLibsOnly()
 {
-
+mkdir -p tvOS/lib
+mkdir -p tvOS/include/curl/
 
 echo "Building tvOS libraries (bitcode)"
 buildTVOS "arm64"
 buildTVOS "x86_64"
 
+cp /tmp/${CURL_VERSION}-tvOS-x86_64/include/curl/* tvOS/include/curl/
+
 lipo \
 	"/tmp/${CURL_VERSION}-tvOS-arm64/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-tvOS-x86_64/lib/libcurl.a" \
-	-create -output lib/libcurl_tvOS.a
+	-create -output tvOS/lib/libcurl.a
 }
 
 
@@ -296,8 +346,10 @@ buildTVOSLibsOnly
 echo "Cleaning up"
 rm -rf /tmp/${CURL_VERSION}-*
 rm -rf ${CURL_VERSION}
-echo "Checking libraries"
-xcrun -sdk iphoneos lipo -info lib/*.a
+echo "Checking CURL Apple libraries"
+xcrun -sdk iphoneos lipo -info Mac/lib/*.a
+xcrun -sdk iphoneos lipo -info iOS/lib/*.a
+xcrun -sdk iphoneos lipo -info tvOS/lib/*.a
 
 #reset trap
 trap - INT TERM EXIT

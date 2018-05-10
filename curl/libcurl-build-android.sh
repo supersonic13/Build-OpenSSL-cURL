@@ -45,7 +45,22 @@ else
 	CURL_VERSION="curl-$1"
 fi
 
-OPENSSL="${PWD}/../openssl/Android" 
+OPENSSL="${PWD}/../openssl/Android"
+
+# HTTP2 support
+NOHTTP2="/tmp/no-http2"
+if [ ! -f "$NOHTTP2" ]; then
+	# nghttp2 will be in ../nghttp2/{Platform}/{arch}
+	NGHTTP2="${PWD}/../nghttp2"  
+fi
+
+if [ ! -z "$NGHTTP2" ]; then 
+	echo "Building with HTTP2 Support (nghttp2)"
+else
+	echo "Building without HTTP2 Support (nghttp2)"
+	NGHTTP2CFG=""
+	NGHTTP2LIB=""
+fi
 
 configureAndroid()
 {
@@ -155,7 +170,14 @@ buildAndroid()
 	cp ${OPENSSL}/openssl-${ABI}/lib/libcrypto.a ${SYSROOT}/usr/lib
 	cp -r ${OPENSSL}/openssl-${ABI}/include/openssl ${SYSROOT}/usr/include
 
+	#if [ ! -z "$NGHTTP2" ]; then 
+		#NGHTTP2CFG="--with-nghttp2=${NGHTTP2}/Mac/${ARCH}"
+		#NGHTTP2LIB="-L${NGHTTP2}/Mac/${ARCH}/lib"
+	#fi
+	# export add to LDFLAGS="${NGHTTP2LIB}"
+
 	./configure --prefix="/tmp/${CURL_VERSION}-Android-${ABI}" \
+			  --with-random=/dev/urandom \
 			  --with-sysroot=${SYSROOT} \
          	  --host=${TOOL} \
               --with-ssl=${OPENSSL}/openssl-${ABI} \

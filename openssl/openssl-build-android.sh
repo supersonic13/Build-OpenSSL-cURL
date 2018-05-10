@@ -204,12 +204,12 @@ buildAndroidLibsOnly()
 	#ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 
 	echo "Building Android libraries"
-	#buildAndroid "android" "armeabi"
-	#buildAndroid "android-armeabi" "armeabi-v7a"
-	#buildAndroid "android64-aarch64" "arm64-v8a"
-	#buildAndroid "android-x86" "x86"
-	#buildAndroid "android-mips" "mips"
-	#buildAndroid "android-mips64" "mips64"
+	buildAndroid "android" "armeabi"
+	buildAndroid "android-armeabi" "armeabi-v7a"
+	buildAndroid "android64-aarch64" "arm64-v8a"
+	buildAndroid "android-x86" "x86"
+	buildAndroid "android-mips" "mips"
+	buildAndroid "android-mips64" "mips64"
 	buildAndroid "android64" "x86_64"
 }
 

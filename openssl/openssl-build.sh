@@ -269,6 +269,11 @@ echo "Cleaning up"
 rm -rf /tmp/${OPENSSL_VERSION}-*
 rm -rf ${OPENSSL_VERSION}
 
+echo "Checking OPENSSL Apple libraries"
+xcrun -sdk iphoneos lipo -info Mac/lib/*.a
+xcrun -sdk iphoneos lipo -info iOS/lib/*.a
+xcrun -sdk iphoneos lipo -info tvOS/lib/*.a
+
 #reset trap
 trap - INT TERM EXIT
 

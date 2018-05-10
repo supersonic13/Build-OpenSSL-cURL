@@ -72,21 +72,36 @@ echo "nghttp2 (rename to libnghttp2.a) [$NGHTTP2]"
 xcrun -sdk iphoneos lipo -info nghttp2/lib/*.a
 echo
 echo "libcurl (rename to libcurl.a) [$LIBCURL]"
-xcrun -sdk iphoneos lipo -info curl/lib/*.a
+xcrun -sdk iphoneos lipo -info curl/*/lib/*.a
 
 echo
 ARCHIVE="archive/libcurl-$LIBCURL-openssl-$OPENSSL-nghttp2-$NGHTTP2"
 echo "Creating archive in $ARCHIVE..."
 mkdir -p "$ARCHIVE"
+mkdir -p "$ARCHIVE/Android/curl"
+mkdir -p "$ARCHIVE/Android/openssl"
+
+mkdir -p "$ARCHIVE/Apple/curl"
+mkdir -p "$ARCHIVE/Apple/openssl"
+
 cp curl/lib/*.a $ARCHIVE
-cp -r curl/Android $ARCHIVE/
-cp openssl/iOS/lib/libcrypto.a $ARCHIVE/libcrypto_iOS.a
-cp openssl/tvOS/lib/libcrypto.a $ARCHIVE/libcrypto_tvOS.a
-cp openssl/Mac/lib/libcrypto.a $ARCHIVE/libcrypto_Mac.a
-cp openssl/iOS/lib/libssl.a $ARCHIVE/libssl_iOS.a
-cp openssl/tvOS/lib/libssl.a $ARCHIVE/libssl_tvOS.a
-cp openssl/Mac/lib/libssl.a $ARCHIVE/libssl_Mac.a
-cp nghttp2/lib/*.a $ARCHIVE
+cp -r curl/Android/* $ARCHIVE/Android/curl/
+cp -r openssl/Android/* $ARCHIVE/Android/openssl/
+
+cp -r curl/Mac $ARCHIVE/Apple/curl/
+cp -r openssl/Mac $ARCHIVE/Apple/openssl/
+cp -r curl/iOS $ARCHIVE/Apple/curl/
+cp -r openssl/iOS $ARCHIVE/Apple/openssl/
+cp -r curl/tvOS $ARCHIVE/Apple/curl/
+cp -r openssl/tvOS $ARCHIVE/Apple/openssl/
+
+#cp openssl/iOS/lib/libcrypto.a $ARCHIVE/libcrypto_iOS.a
+#cp openssl/tvOS/lib/libcrypto.a $ARCHIVE/libcrypto_tvOS.a
+#cp openssl/Mac/lib/libcrypto.a $ARCHIVE/libcrypto_Mac.a
+#cp openssl/iOS/lib/libssl.a $ARCHIVE/libssl_iOS.a
+#cp openssl/tvOS/lib/libssl.a $ARCHIVE/libssl_tvOS.a
+#cp openssl/Mac/lib/libssl.a $ARCHIVE/libssl_Mac.a
+#cp nghttp2/lib/*.a $ARCHIVE
 echo "Archiving Mac binaries for curl and openssl..."
 mv /tmp/curl $ARCHIVE
 mv /tmp/openssl $ARCHIVE
