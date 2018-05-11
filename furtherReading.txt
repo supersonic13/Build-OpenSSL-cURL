@@ -3,3 +3,19 @@ https://github.com/gcesarmza/curl-android-ios
 https://gist.github.com/jhandley/a5e9ab2fe09e7addde6f
 
 
+http://thesoftwarerogue.blogspot.co.uk/2010/05/porting-of-libcurl-to-android-os-using.html
+http://vitiy.info/dockerfile-example-to-compile-libcurl-for-android-inside-docker-container/
+https://www.qiankanglai.me/2014/08/31/android-libcurl/index.html
+https://github.com/bertrandmartel/android-curl-builder
+https://github.com/bertrandmartel/ndk-curl-sample
+https://gist.github.com/bertrandmartel/d964444f4a85c2598053
+https://github.com/cocochpie/android-openssl/blob/master/setenv-android-mod.sh
+https://github.com/cocochpie/android-openssl
+https://github.com/cocochpie/android-openssl/blob/master/build-all-arch.sh
+https://github.com/openssl/openssl/issues/5588
+https://stackoverflow.com/questions/47914889/building-openssl-1-1-0g-for-android-with-clang-ndk-15c-standalone-toolchain-on
+https://www.packtpub.com/mapt/book/application_development/9781785288333/2/ch02lvl1sec20/curl
+https://github.com/android-ndk/ndk/issues/5
+https://stackoverflow.com/questions/36075502/how-to-set-build-environment-variables-to-use-clang-as-part-of-ndk
+https://github.com/sqlcipher/android-database-sqlcipher/blob/gradle/android-database-sqlcipher/build-openssl-libraries.sh
+https://github.com/sqlcipher/android-database-sqlcipher/tree/gradle
