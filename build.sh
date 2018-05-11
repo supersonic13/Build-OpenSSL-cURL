@@ -36,11 +36,19 @@ __________________________________________________________
         exit 127
 }
 
+export RUNNING_ON_OS=''
+unamestr=`uname`
+if [[ "$unamestr" == 'Linux' ]]; then
+   export RUNNING_ON_OS='linux/'
+fi
+
+echo "RUNNING_ON_OS : ${RUNNING_ON_OS}"
 
 BUILD_LIBS=""
 TARGET_PLATFORM=""
 TARGET_ARCH=""
 verbose=1
+QUIET_DEBUG=""
 
 BUILD_OPENSSL=1
 BUILD_CURL=1
@@ -94,6 +102,8 @@ echo "_____________________________"
 
 if [ "$verbose" == 1 ]; then
 	set -o xtrace
+else
+	QUIET_DEBUG="-q"
 fi
 
 if [ "$BUILD_OPENSSL" == 1 ];then	
@@ -108,13 +118,14 @@ if [ "$BUILD_OPENSSL" == 1 ];then
 	if [ "$BUILD_FOR_APPLE" == 1 ];then
 		echo "Building for Apple"
 		echo "-_-_-_-_-_-_-_-_-_"
-		./openssl-build.sh -v "$OPENSSL"
+		./openssl-build.sh -v "$OPENSSL" $QUIET_DEBUG
 	fi
 
 	if [ "$BUILD_FOR_ANDROID" == 1 ];then
 		echo "Building for Android"
 		echo "-_-_-_-_-_-_-_-_-_-_"
-		./openssl-build-android.sh -v "$OPENSSL_ANDROID"
+		#./openssl-build-android.sh -v "$OPENSSL_ANDROID" $QUIET_DEBUG
+		./openssl-build-android_new.sh -v "$OPENSSL_ANDROID" $QUIET_DEBUG
 	fi
 
 	cd ..
@@ -142,13 +153,13 @@ if [ "$BUILD_CURL" == 1 ];then
 	if [ "$BUILD_FOR_APPLE" == 1 ];then
 		echo "Building for Apple"
 		echo "-_-_-_-_-_-_-_-_-_"
-		./libcurl-build.sh -v "$LIBCURL"
+		./libcurl-build.sh -v "$LIBCURL" $QUIET_DEBUG
 	fi
 
 	if [ "$BUILD_FOR_ANDROID" == 1 ];then
 		echo "Building for Android"
 		echo "-_-_-_-_-_-_-_-_-_-_"
-		./libcurl-build-android.sh -v "$LIBCURL"
+		./libcurl-build-android_new.sh -v "$LIBCURL" $QUIET_DEBUG
 	fi
 
 	cd ..

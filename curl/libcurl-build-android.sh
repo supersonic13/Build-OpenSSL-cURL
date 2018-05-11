@@ -15,11 +15,11 @@
 
 set -e
 
-set -o xtrace
+#set -o xtrace
 
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
-export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
+export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
 ANDROID_API=${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
@@ -36,6 +36,7 @@ usage ()
 }
 
 VER_NUMBER=""
+verbose=1
 
 while getopts "h?v:a:q" opt; do
     case "$opt" in
@@ -50,6 +51,10 @@ while getopts "h?v:a:q" opt; do
         ;;
     esac
 done
+
+if [ "$verbose" == 1 ]; then
+	set -o xtrace
+fi
 
 if [ "$VER_NUMBER" == "" ]; then
 	CURL_VERSION="curl-7.50.1"
@@ -78,7 +83,8 @@ configureAndroid()
 {
 	ARCH=$1; ABI=$2; CLANG=${3:-""};
 	TOOLS_ROOT="/tmp/${CURL_VERSION}-Android-${ABI}"
-	TOOLCHAIN_ROOT=${TOOLS_ROOT}/${ABI}-android-toolchain
+	#TOOLCHAIN_ROOT=${TOOLS_ROOT}/${ABI}-android-toolchain
+	TOOLCHAIN_ROOT=/tmp/openssl-android-toolchain
 
 	if [ "$ARCH" == "android" ]; then
 		export ARCH_FLAGS="-mthumb"
@@ -142,8 +148,9 @@ configureAndroid()
 	export STRIP=${NDK_TOOLCHAIN_BASENAME}-strip
 	export CPPFLAGS=${CPPFLAGS:-""}
 	export LIBS=${LIBS:-""}
-	export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -D__ANDROID_API__=${ANDROID_API}"
-	export CXXFLAGS="${CFLAGS} -std=c++11 -frtti -fexceptions"
+	#export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -D__ANDROID_API__=${ANDROID_API}"
+	export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64"
+	export CXXFLAGS="${CFLAGS} -std=c++11 -frtti -fexceptions -D__ANDROID_API__=${ANDROID_API}"
 	export LDFLAGS="${ARCH_LINK}"
 	echo "**********************************************"
 	echo "use ANDROID_API=${ANDROID_API}"
@@ -208,6 +215,9 @@ buildAndroid()
               --disable-verbose \
 			  &> "/tmp/${CURL_VERSION}-Android-${ABI}.log"
 
+	#export LIBS="-lssl -lcrypto"
+	#export LDFLAGS="-arch ${ARCH} -isysroot ${SYSROOT} -L${OPENSSL}/openssl-${ABI}/lib"
+
 	PATH=$TOOLCHAIN_PATH:$PATH
 
 	make clean >> "/tmp/${CURL_VERSION}-Android-${ABI}.log" 2>&1
@@ -243,9 +253,10 @@ buildAndroidLibsOnly()
 	echo "Building Android libraries"
 	buildAndroid "android" "armeabi"
 	buildAndroid "android-armeabi" "armeabi-v7a"
-	buildAndroid "android64-aarch64" "arm64-v8a"
-	buildAndroid "android-x86" "x86"
-	buildAndroid "android64" "x86_64"
+	#buildAndroid "android64-aarch64" "arm64-v8a"
+	#buildAndroid "android-x86" "x86"
+	#buildAndroid "android64" "x86_64"
+	
 	#buildAndroid "android-mips" "mips"
 	#buildAndroid "android-mips64" "mips64"
 }

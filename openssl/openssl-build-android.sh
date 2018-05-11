@@ -17,12 +17,12 @@
 
 set -e
 
-set -o xtrace
+#set -o xtrace
 
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
-export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
-#export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
+#export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
+export ANDROID_NDK="/Users/arun/workspace/ndk/${RUNNING_ON_OS}android-ndk-r17"
 ANDROID_API=${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
@@ -42,6 +42,8 @@ usage ()
 
 VER_NUMBER=""
 
+verbose=1
+
 while getopts "h?v:a:q" opt; do
     case "$opt" in
     h|\?)
@@ -55,6 +57,12 @@ while getopts "h?v:a:q" opt; do
         ;;
     esac
 done
+
+if [ "$verbose" == 1 ]; then
+	set -o xtrace
+else
+	QUIET_DEBUG="-q"
+fi
 
 if [ "$VER_NUMBER" == "" ]; then
 	OPENSSL_VERSION="openssl-1.0.1t"
@@ -195,6 +203,7 @@ buildAndroid()
 	##
 	# Fix the makefile.
 	#perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile
+	sed -ie "s!-mandroid!!" "Makefile"
 
 	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
@@ -231,9 +240,9 @@ buildAndroidLibsOnly()
 	echo "Building Android libraries"
 	buildAndroid "android" "armeabi"
 	buildAndroid "android-armeabi" "armeabi-v7a"
-	buildAndroid "android64-aarch64" "arm64-v8a"
-	buildAndroid "android-x86" "x86"
-	buildAndroid "android64" "x86_64"
+	#buildAndroid "android64-aarch64" "arm64-v8a"
+	#buildAndroid "android-x86" "x86"
+	#buildAndroid "android64" "x86_64"
 	#buildAndroid "android-mips" "mips"
 	#buildAndroid "android-mips64" "mips64"
 }
