@@ -21,3 +21,4 @@ https://github.com/sqlcipher/android-database-sqlcipher/blob/gradle/android-data
 https://github.com/sqlcipher/android-database-sqlcipher/tree/gradle
 https://curl.haxx.se/docs/install.html
 https://github.com/curl/curl
+https://scottyab.com/2017/05/how-to-build-and-integrate-openssl-into-your-android-ndk-project/
