@@ -19,3 +19,5 @@ https://github.com/android-ndk/ndk/issues/5
 https://stackoverflow.com/questions/36075502/how-to-set-build-environment-variables-to-use-clang-as-part-of-ndk
 https://github.com/sqlcipher/android-database-sqlcipher/blob/gradle/android-database-sqlcipher/build-openssl-libraries.sh
 https://github.com/sqlcipher/android-database-sqlcipher/tree/gradle
+https://curl.haxx.se/docs/install.html
+https://github.com/curl/curl
