@@ -21,8 +21,11 @@ set -o xtrace
 
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
-export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
-#export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
+#export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
+export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
+#export NDK_ROOT=/Users/arun/workspace/ndk/android-ndk-r17
+
+
 ANDROID_API=${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
@@ -61,6 +64,53 @@ if [ "$VER_NUMBER" == "" ]; then
 else
 	OPENSSL_VERSION="openssl-$VER_NUMBER"
 fi
+
+configureAndroidNew()
+{
+	ARCH=$1; ABI=$2; CLANG=${3:-""};
+	#TOOLS_ROOT="/tmp/${OPENSSL_VERSION}-Android-${ABI}"
+	#TOOLCHAIN_ROOT=${TOOLS_ROOT}/${ABI}-android-toolchain
+
+	if [ "$ARCH" == "android" ]; then
+		#export ARCH_FLAGS="-mthumb"
+		#export ARCH_LINK=""
+		#export TOOL="arm-linux-androideabi"
+		#NDK_FLAGS="--arch=arm"
+		export _ANDROID_ARCH="arch-arm"
+		export _ANDROID_EABI="arm-linux-androideabi-4.9"
+	elif [ "$ARCH" == "android-armeabi" ]; then
+		#export ARCH_FLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -mfpu=neon"
+		#export ARCH_LINK="-march=armv7-a -Wl,--fix-cortex-a8"
+		#export TOOL="arm-linux-androideabi"
+		#NDK_FLAGS="--arch=arm"
+		export _ANDROID_ARCH="arch-arm"
+		export _ANDROID_EABI="arm-linux-androideabi-4.9"
+	elif [ "$ARCH" == "android64-aarch64" ]; then
+		#export ARCH_FLAGS=""
+		#export ARCH_LINK=""
+		#export TOOL="aarch64-linux-android"
+		#NDK_FLAGS="--arch=arm64"
+		export _ANDROID_ARCH="arch-arm64"
+		export _ANDROID_EABI="aarch64-linux-android-4.9"
+	elif [ "$ARCH" == "android-x86" ]; then
+		#export ARCH_FLAGS="-march=i686 -mtune=intel -msse3 -mfpmath=sse -m32"
+		#export ARCH_LINK=""
+		#export TOOL="i686-linux-android"
+		#NDK_FLAGS="--arch=x86"
+		export _ANDROID_ARCH="arch-x86"
+		export _ANDROID_EABI="x86-4.9"
+	elif [ "$ARCH" == "android64" ]; then
+		#export ARCH_FLAGS="-march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel"
+		#export ARCH_LINK=""
+		#export TOOL="x86_64-linux-android"
+		#NDK_FLAGS="--arch=x86_64"
+		export _ANDROID_ARCH="arch-x86_64"
+		export _ANDROID_EABI="x86_64-4.9"
+	fi;
+
+	./Setenv-android.sh
+
+}
 
 configureAndroid()
 {
@@ -154,6 +204,31 @@ configureAndroid()
 	echo "**********************************************"
 }
 
+
+buildAndroidNew()
+{
+	ARCH=$1; ABI=$2;
+	configureAndroidNew $ARCH $ABI
+
+	pushd . > /dev/null
+	cd "${OPENSSL_VERSION}"
+
+	make clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+	perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile.org
+
+	./config no-ssl2 no-ssl3 no-comp no-hw no-engine \
+     --openssldir="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
+	 --prefix="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
+	 &> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log"
+
+	make depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	make all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+	make install CC=$ANDROID_TOOLCHAIN/$ANDROID_CC RANLIB=$ANDROID_TOOLCHAIN/$ANDROID_RANLIB \
+		>> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+}
+
 buildAndroid()
 {
 	ARCH=$1; ABI=$2;
@@ -163,7 +238,7 @@ buildAndroid()
 
 	## https://github.com/n8fr8/orbot/issues/92 - OpenSSL doesn't support compilation with clang (on Android) yet. You'll have to use GCC
 	#configureAndroid $ARCH $ABI "clang"
-	configureAndroid $ARCH $ABI 
+	configureAndroid $ARCH $ABI "clang" 
 
 	if [[ $OPENSSL_VERSION != openssl-1.1.* ]]; then
 		if [[ $ARCH == "android-armeabi" ]]; then
@@ -191,19 +266,27 @@ buildAndroid()
 			  &> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log"
 	PATH=$TOOLCHAIN_PATH:$PATH
 
+	#export NDK_PROJECT_PATH=`pwd`"/tmp/${OPENSSL_VERSION}-Android-${ABI}"
+	#export NDK_PROJECT_PATH=`pwd`"/openssl/${OPENSSL_VERSION}"
+
 	###
 	##
 	# Fix the makefile.
 	#perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile
+
+
+	sed -ie "s!-mandroid! !" "Makefile"
 
 	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 
+	#$ANDROID_NDK/ndk-build -j2 -d ssl crypto
+
 	if $MAKE_EXE -j4 >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1; then
 		$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-		$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+		#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	fi
 
 	popd > /dev/null
@@ -229,14 +312,17 @@ buildAndroidLibsOnly()
 	#ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 
 	echo "Building Android libraries"
-	buildAndroid "android" "armeabi"
-	buildAndroid "android-armeabi" "armeabi-v7a"
-	buildAndroid "android64-aarch64" "arm64-v8a"
-	buildAndroid "android-x86" "x86"
-	buildAndroid "android64" "x86_64"
+	buildAndroidNew "android" "armeabi"
+	#buildAndroidNew "android-armeabi" "armeabi-v7a"
+	#buildAndroidNew "android64-aarch64" "arm64-v8a"
+	#buildAndroidNew "android-x86" "x86"
+	#buildAndroidNew "android64" "x86_64"
+	
 	#buildAndroid "android-mips" "mips"
 	#buildAndroid "android-mips64" "mips64"
 }
+
+
 
 echo "Cleaning up"
 rm -rf include/openssl/* lib/*
@@ -257,6 +343,8 @@ echo "Unpacking openssl"
 tar xfz "${OPENSSL_VERSION}.tar.gz"
 
 buildAndroidLibsOnly
+
+exit
 
 echo "Cleaning up"
 rm -rf /tmp/${OPENSSL_VERSION}-*
