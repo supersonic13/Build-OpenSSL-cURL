@@ -125,7 +125,7 @@ if [ "$BUILD_OPENSSL" == 1 ];then
 		echo "Building for Android"
 		echo "-_-_-_-_-_-_-_-_-_-_"
 		#./openssl-build-android.sh -v "$OPENSSL_ANDROID" $QUIET_DEBUG
-		./openssl-build-android_new.sh -v "$OPENSSL_ANDROID" $QUIET_DEBUG
+		./openssl-build-android.sh -v "$OPENSSL_ANDROID" $QUIET_DEBUG
 	fi
 
 	cd ..
@@ -159,7 +159,7 @@ if [ "$BUILD_CURL" == 1 ];then
 	if [ "$BUILD_FOR_ANDROID" == 1 ];then
 		echo "Building for Android"
 		echo "-_-_-_-_-_-_-_-_-_-_"
-		./libcurl-build-android_new.sh -v "$LIBCURL" $QUIET_DEBUG
+		./libcurl-build-android.sh -v "$LIBCURL" $QUIET_DEBUG
 	fi
 
 	cd ..

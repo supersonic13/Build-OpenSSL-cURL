@@ -20,7 +20,7 @@ set -e
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
-ANDROID_API=${ANDROID_API:-21}
+ANDROID_API=${ANDROID_API:-23}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -82,25 +82,34 @@ fi
 configureAndroid()
 {
 	ARCH=$1; ABI=$2; CLANG=${3:-""};
-	TOOLS_ROOT="/tmp/${CURL_VERSION}-Android-${ABI}"
-	#TOOLCHAIN_ROOT=${TOOLS_ROOT}/${ABI}-android-toolchain
-	TOOLCHAIN_ROOT=/tmp/openssl-android-toolchain
+	TOOLS_ROOT="/tmp/curl-Android-${ABI}"
+	TOOLCHAIN_ROOT=${TOOLS_ROOT}/${ABI}-android-toolchain
+	#TOOLCHAIN_ROOT=/tmp/openssl-android-toolchain
+
+	export PKG_CONFIG_PATH="/tmp/openssl-Android-${ABI}/lib/pkgconfig"
+
 
 	if [ "$ARCH" == "android" ]; then
 		export ARCH_FLAGS="-mthumb"
 		export ARCH_LINK=""
 		export TOOL="arm-linux-androideabi"
 		NDK_FLAGS="--arch=arm"
+		export SYSTEM="android"
+		export MACHINE=armv7
 	elif [ "$ARCH" == "android-armeabi" ]; then
 		export ARCH_FLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -mfpu=neon"
 		export ARCH_LINK="-march=armv7-a -Wl,--fix-cortex-a8"
 		export TOOL="arm-linux-androideabi"
 		NDK_FLAGS="--arch=arm"
+		export SYSTEM="android"
+		export MACHINE=armv7
 	elif [ "$ARCH" == "android64-aarch64" ]; then
 		export ARCH_FLAGS=""
 		export ARCH_LINK=""
 		export TOOL="aarch64-linux-android"
 		NDK_FLAGS="--arch=arm64"
+		export SYSTEM="android"
+		export MACHINE=aarch64
 	elif [ "$ARCH" == "android-x86" ]; then
 		export ARCH_FLAGS="-march=i686 -mtune=intel -msse3 -mfpmath=sse -m32"
 		export ARCH_LINK=""
@@ -111,18 +120,21 @@ configureAndroid()
 		export ARCH_LINK=""
 		export TOOL="x86_64-linux-android"
 		NDK_FLAGS="--arch=x86_64"
-	elif [ "$ARCH" == "android-mips" ]; then
-		export ARCH_FLAGS=""
-		export ARCH_LINK=""
-		export TOOL="mipsel-linux-android"
-		NDK_FLAGS="--arch=mips"
-	elif [ "$ARCH" == "android-mips64" ]; then
-		export ARCH="linux64-mips64"
-		export ARCH_FLAGS=""
-		export ARCH_LINK=""
-		export TOOL="mips64el-linux-android"
-		NDK_FLAGS="--arch=mips64"
+		export MACHINE=i686
+		export SYSTEM="android"
+	#elif [ "$ARCH" == "android-mips" ]; then
+		#export ARCH_FLAGS=""
+		#export ARCH_LINK=""
+		#export TOOL="mipsel-linux-android"
+		#NDK_FLAGS="--arch=mips"
+	#elif [ "$ARCH" == "android-mips64" ]; then
+		#export ARCH="linux64-mips64"
+		#export ARCH_FLAGS=""
+		#export ARCH_LINK=""
+		#export TOOL="mips64el-linux-android"
+		#NDK_FLAGS="--arch=mips64"
 	fi;
+
 
 	[ -d ${TOOLCHAIN_ROOT} ] || python $NDK/build/tools/make_standalone_toolchain.py \
                                      --api ${ANDROID_API} \
@@ -133,6 +145,8 @@ configureAndroid()
 	export TOOLCHAIN_PATH=${TOOLCHAIN_ROOT}/bin
 	export NDK_TOOLCHAIN_BASENAME=${TOOLCHAIN_PATH}/${TOOL}
 	export SYSROOT=${TOOLCHAIN_ROOT}/sysroot
+	export ANDROID_DEV="${SYSROOT}/usr"
+	export ANDROID_DEP_FLAGS="${TOOLCHAIN_ROOT}/lib/gcc/${TOOL}/4.9.x/include"
 	export CROSS_SYSROOT=$SYSROOT
 	if [ -z "${CLANG}" ]; then
 		export CC=${NDK_TOOLCHAIN_BASENAME}-gcc
@@ -149,7 +163,7 @@ configureAndroid()
 	export CPPFLAGS=${CPPFLAGS:-""}
 	export LIBS=${LIBS:-""}
 	#export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -D__ANDROID_API__=${ANDROID_API}"
-	export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64"
+	export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -I${ANDROID_DEV} -I${ANDROID_DEP_FLAGS}"
 	export CXXFLAGS="${CFLAGS} -std=c++11 -frtti -fexceptions -D__ANDROID_API__=${ANDROID_API}"
 	export LDFLAGS="${ARCH_LINK}"
 	echo "**********************************************"
@@ -195,11 +209,13 @@ buildAndroid()
 	#fi
 	# export add to LDFLAGS="${NGHTTP2LIB}"
 
-	./configure --prefix="/tmp/${CURL_VERSION}-Android-${ABI}" \
+	
+	./configure --host=${TOOL} \
+			--target=${TOOL} \
+			--prefix="/tmp/curl-Android-${ABI}" \
 			  --with-random=/dev/urandom \
 			  --with-sysroot=${SYSROOT} \
-         	  --host=${TOOL} \
-              --with-ssl=${OPENSSL}/openssl-${ABI} \
+              --with-ssl \
               --enable-ipv6 \
               --enable-static \
               --enable-threaded-resolver \
@@ -212,11 +228,10 @@ buildAndroid()
               --disable-shared \
               --disable-smb \
               --disable-telnet \
-              --disable-verbose \
 			  &> "/tmp/${CURL_VERSION}-Android-${ABI}.log"
 
-	#export LIBS="-lssl -lcrypto"
-	#export LDFLAGS="-arch ${ARCH} -isysroot ${SYSROOT} -L${OPENSSL}/openssl-${ABI}/lib"
+	export LIBS="-lssl -lcrypto"
+	export LDFLAGS="-arch ${ARCH} -isysroot ${SYSROOT} -L${OPENSSL}/openssl-${ABI}/lib"
 
 	PATH=$TOOLCHAIN_PATH:$PATH
 
@@ -234,24 +249,24 @@ buildAndroid()
 	OUTPUT_ROOT=Android/curl-${ABI}
 	[ -d ${OUTPUT_ROOT}/include ] || mkdir -p ${OUTPUT_ROOT}/include
 
-	cp -r "/tmp/${CURL_VERSION}-Android-${ABI}/include/curl" ${OUTPUT_ROOT}/include
+	cp -r "/tmp/curl-Android-${ABI}/include/curl" ${OUTPUT_ROOT}/include
 
 	[ -d ${OUTPUT_ROOT}/lib ] || mkdir -p ${OUTPUT_ROOT}/lib
-	cp "/tmp/${CURL_VERSION}-Android-${ABI}/lib/libcurl.a" ${OUTPUT_ROOT}/lib
+	cp "/tmp/curl-Android-${ABI}/lib/libcurl.a" ${OUTPUT_ROOT}/lib
 
 }
 
 buildAndroidLibsOnly()
 {
-	mkdir -p Android/lib
-	mkdir -p Android/include/openssl/
+	#mkdir -p Android/lib
+	#mkdir -p Android/include/openssl/
 
 
 	#ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 	#ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 
 	echo "Building Android libraries"
-	buildAndroid "android" "armeabi"
+	#buildAndroid "android" "armeabi"
 	buildAndroid "android-armeabi" "armeabi-v7a"
 	#buildAndroid "android64-aarch64" "arm64-v8a"
 	#buildAndroid "android-x86" "x86"
@@ -264,8 +279,8 @@ buildAndroidLibsOnly()
 echo "Cleaning up"
 rm -rf include/curl/* lib/*
 
-mkdir -p lib
-mkdir -p include/curl/
+#mkdir -p lib
+#mkdir -p include/curl/
 
 rm -rf "/tmp/${CURL_VERSION}-*"
 rm -rf "/tmp/${CURL_VERSION}-*.log"
@@ -283,6 +298,8 @@ echo "Unpacking curl"
 tar xfz "${CURL_VERSION}.tar.gz"
 
 buildAndroidLibsOnly
+
+exit
 
 echo "Cleaning up"
 rm -rf /tmp/${CURL_VERSION}-*

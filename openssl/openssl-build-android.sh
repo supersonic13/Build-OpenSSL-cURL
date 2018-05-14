@@ -23,7 +23,7 @@ TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
 export ANDROID_NDK="/Users/arun/workspace/ndk/${RUNNING_ON_OS}android-ndk-r17"
-ANDROID_API=${ANDROID_API:-21}
+ANDROID_API=${ANDROID_API:-23}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -73,7 +73,7 @@ fi
 configureAndroid()
 {
 	ARCH=$1; ABI=$2; CLANG=${3:-""};
-	TOOLS_ROOT="/tmp/${OPENSSL_VERSION}-Android-${ABI}"
+	TOOLS_ROOT="/tmp/openssl-Android-${ABI}"
 	TOOLCHAIN_ROOT=${TOOLS_ROOT}/${ABI}-android-toolchain
 
 	if [ "$ARCH" == "android" ]; then
@@ -81,16 +81,22 @@ configureAndroid()
 		export ARCH_LINK=""
 		export TOOL="arm-linux-androideabi"
 		NDK_FLAGS="--arch=arm"
+		export SYSTEM="android"
+		export MACHINE=armv7
 	elif [ "$ARCH" == "android-armeabi" ]; then
 		export ARCH_FLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -mfpu=neon"
 		export ARCH_LINK="-march=armv7-a -Wl,--fix-cortex-a8"
 		export TOOL="arm-linux-androideabi"
 		NDK_FLAGS="--arch=arm"
+		export SYSTEM="android"
+		export MACHINE=armv7
 	elif [ "$ARCH" == "android64-aarch64" ]; then
 		export ARCH_FLAGS=""
 		export ARCH_LINK=""
 		export TOOL="aarch64-linux-android"
 		NDK_FLAGS="--arch=arm64"
+		export SYSTEM="android"
+		export MACHINE=aarch64
 	elif [ "$ARCH" == "android-x86" ]; then
 		export ARCH_FLAGS="-march=i686 -mtune=intel -msse3 -mfpmath=sse -m32"
 		export ARCH_LINK=""
@@ -101,17 +107,19 @@ configureAndroid()
 		export ARCH_LINK=""
 		export TOOL="x86_64-linux-android"
 		NDK_FLAGS="--arch=x86_64"
-	elif [ "$ARCH" == "android-mips" ]; then
-		export ARCH_FLAGS=""
-		export ARCH_LINK=""
-		export TOOL="mipsel-linux-android"
-		NDK_FLAGS="--arch=mips"
-	elif [ "$ARCH" == "android-mips64" ]; then
-		export ARCH="linux64-mips64"
-		export ARCH_FLAGS=""
-		export ARCH_LINK=""
-		export TOOL="mips64el-linux-android"
-		NDK_FLAGS="--arch=mips64"
+		export MACHINE=i686
+		export SYSTEM="android"
+	#elif [ "$ARCH" == "android-mips" ]; then
+		#export ARCH_FLAGS=""
+		#export ARCH_LINK=""
+		#export TOOL="mipsel-linux-android"
+		#NDK_FLAGS="--arch=mips"
+	#elif [ "$ARCH" == "android-mips64" ]; then
+		#export ARCH="linux64-mips64"
+		#export ARCH_FLAGS=""
+		#export ARCH_LINK=""
+		#export TOOL="mips64el-linux-android"
+		#NDK_FLAGS="--arch=mips64"
 	fi;
 
 	[ -d ${TOOLCHAIN_ROOT} ] || python $NDK/build/tools/make_standalone_toolchain.py \
@@ -120,9 +128,12 @@ configureAndroid()
                                      --install-dir=${TOOLCHAIN_ROOT} \
                                      $NDK_FLAGS
 
+                                 #--stl libc++ \
 	export TOOLCHAIN_PATH=${TOOLCHAIN_ROOT}/bin
 	export NDK_TOOLCHAIN_BASENAME=${TOOLCHAIN_PATH}/${TOOL}
 	export SYSROOT=${TOOLCHAIN_ROOT}/sysroot
+	export ANDROID_DEV="${SYSROOT}/usr"
+	export ANDROID_DEP_FLAGS="${TOOLCHAIN_ROOT}/lib/gcc/${TOOL}/4.9.x/include"
 	export CROSS_SYSROOT=$SYSROOT
 	if [ -z "${CLANG}" ]; then
 		export CC=${NDK_TOOLCHAIN_BASENAME}-gcc
@@ -131,6 +142,7 @@ configureAndroid()
 		export CC=${NDK_TOOLCHAIN_BASENAME}-clang
 		export CXX=${NDK_TOOLCHAIN_BASENAME}-clang++
 	fi;
+	#export CROSS_COMPILE="${NDK_TOOLCHAIN_BASENAME}"
 	export LINK=${CXX}
 	export LD=${NDK_TOOLCHAIN_BASENAME}-ld
 	export AR=${NDK_TOOLCHAIN_BASENAME}-ar
@@ -187,9 +199,20 @@ buildAndroid()
 
 	echo "Building ${OPENSSL_VERSION} for Android ${ARCH}"
 
+	#./Configure $ARCH \
+			  #--prefix="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
+			  #--openssldir="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
+              #--with-zlib-include=$SYSROOT/usr/include \
+              #--with-zlib-lib=$SYSROOT/usr/lib \
+              #zlib \
+              #no-asm \
+              #no-shared \
+              #no-unit-test	\
+			  #&> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log"
+
 	./Configure $ARCH \
-			  --prefix="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
-			  --openssldir="/tmp/${OPENSSL_VERSION}-Android-${ABI}" \
+			  --prefix="/tmp/openssl-Android-${ABI}" \
+			  --openssldir="/tmp/openssl-Android-${ABI}" \
               --with-zlib-include=$SYSROOT/usr/include \
               --with-zlib-lib=$SYSROOT/usr/lib \
               zlib \
@@ -199,32 +222,47 @@ buildAndroid()
 			  &> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log"
 	PATH=$TOOLCHAIN_PATH:$PATH
 
+
 	###
 	##
 	# Fix the makefile.
-	#perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile
+	perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile
 	sed -ie "s!-mandroid!!" "Makefile"
+	sed -ie "s!-O3!-Os!" "Makefile"
+	#sed -ie "/^DEPFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
+	sed -ie "/^CFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
+
 
 	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 
-	if $MAKE_EXE -j4 >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1; then
-		$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-		$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-	fi
+	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 
+	$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+
+
+	#if $MAKE_EXE -j4 >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1; then
+		#$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+		#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#fi
+
+	#exit
 	popd > /dev/null
 
 	OUTPUT_ROOT=Android/openssl-${ABI}
 	[ -d ${OUTPUT_ROOT}/include ] || mkdir -p ${OUTPUT_ROOT}/include
 
-	cp -r "/tmp/${OPENSSL_VERSION}-Android-${ABI}/include/openssl" ${OUTPUT_ROOT}/include
+	cp -r "/tmp/openssl-Android-${ABI}/include/openssl" ${OUTPUT_ROOT}/include
 
 	[ -d ${OUTPUT_ROOT}/lib ] || mkdir -p ${OUTPUT_ROOT}/lib
-	cp "/tmp/${OPENSSL_VERSION}-Android-${ABI}/lib/libcrypto.a" ${OUTPUT_ROOT}/lib
-	cp "/tmp/${OPENSSL_VERSION}-Android-${ABI}/lib/libssl.a" ${OUTPUT_ROOT}/lib
+	cp "/tmp/openssl-Android-${ABI}/lib/libcrypto.a" ${OUTPUT_ROOT}/lib
+	cp "/tmp/openssl-Android-${ABI}/lib/libssl.a" ${OUTPUT_ROOT}/lib
 
 }
 
@@ -250,8 +288,8 @@ buildAndroidLibsOnly()
 echo "Cleaning up"
 rm -rf include/openssl/* lib/*
 
-rm -rf "/tmp/${OPENSSL_VERSION}-*"
-rm -rf "/tmp/${OPENSSL_VERSION}-*.log"
+rm -rf "/tmp/openssl-*"
+rm -rf "/tmp/openssl-*.log"
 
 rm -rf "${OPENSSL_VERSION}"
 
@@ -267,8 +305,10 @@ tar xfz "${OPENSSL_VERSION}.tar.gz"
 
 buildAndroidLibsOnly
 
+exit
+
 echo "Cleaning up"
-rm -rf /tmp/${OPENSSL_VERSION}-*
+rm -rf /tmp/openssl-*
 rm -rf ${OPENSSL_VERSION}
 
 #reset trap
