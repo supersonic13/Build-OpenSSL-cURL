@@ -22,8 +22,8 @@ set -e
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
-export ANDROID_NDK="/Users/arun/workspace/ndk/${RUNNING_ON_OS}android-ndk-r17"
-ANDROID_API=${ANDROID_API:-23}
+export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
+ANDROID_API=${ANDROID_API:-27}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -227,24 +227,38 @@ buildAndroid()
 	##
 	# Fix the makefile.
 	perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile
+	#--target=armv7-none-linux-androideabi
 	sed -ie "s!-mandroid!!" "Makefile"
 	sed -ie "s!-O3!-Os!" "Makefile"
-	#sed -ie "/^DEPFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
+	sed -ie "/^DEPFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
 	sed -ie "/^CFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
 
-
-	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-
-	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
-	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	cp Makefile ../Makefile-openssl
 
 	$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	$MAKE_EXE build_crypto >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 
+
+	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+	#$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	
+	#$MAKE_EXE build_crypto >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	#$MAKE_EXE build_ssl >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+	
+	#exit	
+	#$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 
 
 	#if $MAKE_EXE -j4 >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1; then
@@ -268,15 +282,15 @@ buildAndroid()
 
 buildAndroidLibsOnly()
 {
-	mkdir -p Android/lib
-	mkdir -p Android/include/openssl/
+	#mkdir -p Android/lib
+	#mkdir -p Android/include/openssl/
 
 
 	#ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 	#ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 
 	echo "Building Android libraries"
-	buildAndroid "android" "armeabi"
+	#buildAndroid "android" "armeabi"
 	buildAndroid "android-armeabi" "armeabi-v7a"
 	#buildAndroid "android64-aarch64" "arm64-v8a"
 	#buildAndroid "android-x86" "x86"
@@ -304,8 +318,6 @@ echo "Unpacking openssl"
 tar xfz "${OPENSSL_VERSION}.tar.gz"
 
 buildAndroidLibsOnly
-
-exit
 
 echo "Cleaning up"
 rm -rf /tmp/openssl-*

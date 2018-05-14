@@ -20,7 +20,7 @@ set -e
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
-ANDROID_API=${ANDROID_API:-23}
+ANDROID_API=${ANDROID_API:-27}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -282,8 +282,8 @@ rm -rf include/curl/* lib/*
 #mkdir -p lib
 #mkdir -p include/curl/
 
-rm -rf "/tmp/${CURL_VERSION}-*"
-rm -rf "/tmp/${CURL_VERSION}-*.log"
+rm -rf "/tmp/curl-*"
+rm -rf "/tmp/curl-*.log"
 
 rm -rf "${CURL_VERSION}"
 
@@ -299,10 +299,8 @@ tar xfz "${CURL_VERSION}.tar.gz"
 
 buildAndroidLibsOnly
 
-exit
-
 echo "Cleaning up"
-rm -rf /tmp/${CURL_VERSION}-*
+rm -rf /tmp/curl-*
 rm -rf ${CURL_VERSION}
 echo "Checking libraries"
 #xcrun -sdk iphoneos lipo -info lib/*.a
