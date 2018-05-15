@@ -10,9 +10,9 @@
 # EDIT this section to Select Versions #
 ########################################
 
-OPENSSL="1.0.2o"
+OPENSSL="1.0.2k"
 OPENSSL_ANDROID=$OPENSSL
-LIBCURL="7.58.0"
+LIBCURL="7.54.1"
 NGHTTP2="1.24.0"
 
 ########################################

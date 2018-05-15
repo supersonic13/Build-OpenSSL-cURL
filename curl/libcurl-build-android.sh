@@ -19,8 +19,8 @@ set -e
 
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
-export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
-ANDROID_API=${ANDROID_API:-23}
+export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r16b"
+ANDROID_API=${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -196,7 +196,7 @@ buildAndroid()
 
 	## https://github.com/n8fr8/orbot/issues/92 - OpenSSL doesn't support compilation with clang (on Android) yet. You'll have to use GCC
 	#configureAndroid $ARCH $ABI "clang"
-	configureAndroid $ARCH $ABI
+	configureAndroid $ARCH $ABI "clang"
 
 	# Copy the correct SSL libs
 	cp ${OPENSSL}/openssl-${ABI}/lib/libssl.a ${SYSROOT}/usr/lib
