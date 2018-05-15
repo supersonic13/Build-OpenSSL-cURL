@@ -187,13 +187,25 @@ mkdir -p "$ARCHIVE"
 if [ "$BUILD_FOR_APPLE" == 1 ];then
 	mkdir -p "$ARCHIVE/Apple/curl"
 	mkdir -p "$ARCHIVE/Apple/openssl"
+	mkdir -p "$ARCHIVE/Apple/common"
 
 	cp -r curl/Mac $ARCHIVE/Apple/curl/
 	cp -r openssl/Mac $ARCHIVE/Apple/openssl/
+	mkdir -p "$ARCHIVE/Apple/common/Mac"
+	cp curl/Mac/lib/*.a $ARCHIVE/Apple/common/Mac/
+	cp openssl/Mac/lib/*.a $ARCHIVE/Apple/common/Mac/
+
 	cp -r curl/iOS $ARCHIVE/Apple/curl/
 	cp -r openssl/iOS $ARCHIVE/Apple/openssl/
+	mkdir -p "$ARCHIVE/Apple/common/iOS"
+	cp curl/iOS/lib/*.a $ARCHIVE/Apple/common/iOS/
+	cp openssl/iOS/lib/*.a $ARCHIVE/Apple/common/iOS/
+
 	cp -r curl/tvOS $ARCHIVE/Apple/curl/
 	cp -r openssl/tvOS $ARCHIVE/Apple/openssl/
+	mkdir -p "$ARCHIVE/Apple/common/tvOS"
+	cp curl/tvOS/lib/*.a $ARCHIVE/Apple/common/tvOS/
+	cp openssl/tvOS/lib/*.a $ARCHIVE/Apple/common/tvOS/
 fi
 
 if [ "$BUILD_FOR_ANDROID" == 1 ];then

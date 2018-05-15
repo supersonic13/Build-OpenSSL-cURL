@@ -156,11 +156,13 @@ buildIOS()
 	export CC="${BUILD_TOOLS}/usr/bin/gcc"
 	export CFLAGS="-arch ${ARCH} -pipe -Os -gdwarf-2 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -miphoneos-version-min=${IOS_MIN_SDK_VERSION} ${CC_BITCODE_FLAG}"
 	export LDFLAGS="-arch ${ARCH} -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -L${OPENSSL}/iOS/lib ${NGHTTP2LIB}"
+	#export LIBS="-lssl -lcrypto"
    
 	echo "Building ${CURL_VERSION} for ${PLATFORM} ${IOS_SDK_VERSION} ${ARCH} ${BITCODE}"
 
 	if [[ "${ARCH}" == "arm64" ]]; then
-		./configure -prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} --host="arm-apple-darwin" \
+		./configure --prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} \
+			--host="arm-apple-darwin" \
 			--enable-ipv6 \
 			--enable-threaded-resolver \
 			--disable-dict \
@@ -172,10 +174,10 @@ buildIOS()
 			--disable-shared \
 			--disable-smb \
 			--disable-telnet \
-			--disable-verbose \
 			&> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log"
 	else
-		./configure -prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" -disable-shared --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} --host="${ARCH}-apple-darwin" \
+		./configure --prefix="/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}" --enable-static -with-random=/dev/urandom --with-ssl=${OPENSSL}/iOS ${NGHTTP2CFG} \
+			--host="${ARCH}-apple-darwin" \
 			--enable-ipv6 \
 			--enable-threaded-resolver \
 			--disable-dict \
@@ -187,7 +189,6 @@ buildIOS()
 			--disable-shared \
 			--disable-smb \
 			--disable-telnet \
-			--disable-verbose \
 			&> "/tmp/${CURL_VERSION}-iOS-${ARCH}-${BITCODE}.log"
 	fi
 
@@ -220,13 +221,13 @@ buildTVOS()
 	export CROSS_SDK="${PLATFORM}${TVOS_SDK_VERSION}.sdk"
 	export BUILD_TOOLS="${DEVELOPER}"
 	export CC="${BUILD_TOOLS}/usr/bin/gcc"
-	export CFLAGS="-arch ${ARCH} -pipe -Os -gdwarf-2 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -mtvos-version-min=${TVOS_MIN_SDK_VERSION} -fembed-bitcode"
+	export CFLAGS="-arch ${ARCH} -pipe -Os -gdwarf-2 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -mtvos-version-min=${TVOS_MIN_SDK_VERSION}"
 	export LDFLAGS="-arch ${ARCH} -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -L${OPENSSL}/tvOS/lib ${NGHTTP2LIB}"
 #	export PKG_CONFIG_PATH 
    
 	echo "Building ${CURL_VERSION} for ${PLATFORM} ${TVOS_SDK_VERSION} ${ARCH}"
 
-	./configure -prefix="/tmp/${CURL_VERSION}-tvOS-${ARCH}" --host="arm-apple-darwin" -disable-shared -with-random=/dev/urandom --disable-ntlm-wb --with-ssl="${OPENSSL}/tvOS" ${NGHTTP2CFG} \
+	./configure --prefix="/tmp/${CURL_VERSION}-tvOS-${ARCH}" --host="arm-apple-darwin" --with-random=/dev/urandom --disable-ntlm-wb --with-ssl="${OPENSSL}/tvOS" ${NGHTTP2CFG} \
 			--enable-ipv6 \
 			--enable-threaded-resolver \
 			--disable-dict \
@@ -297,21 +298,21 @@ buildIOSLibsOnly()
 mkdir -p iOS/lib
 mkdir -p iOS/include/curl/
 
-echo "Building iOS libraries (bitcode)"
-buildIOS "armv7" "bitcode"
-buildIOS "armv7s" "bitcode"
-buildIOS "arm64" "bitcode"
-buildIOS "x86_64" "bitcode"
-#buildIOS "i386" "bitcode"
+#echo "Building iOS libraries (bitcode)"
+#buildIOS "armv7" "bitcode"
+#buildIOS "armv7s" "bitcode"
+#buildIOS "arm64" "bitcode"
+#buildIOS "x86_64" "bitcode"
+##buildIOS "i386" "bitcode"
 
-cp /tmp/${CURL_VERSION}-iOS-x86_64-bitcode/include/curl/* iOS/include/curl/
+#cp /tmp/${CURL_VERSION}-iOS-x86_64-bitcode/include/curl/* iOS/include/curl/
 
-lipo \
-	"/tmp/${CURL_VERSION}-iOS-armv7-bitcode/lib/libcurl.a" \
-	"/tmp/${CURL_VERSION}-iOS-armv7s-bitcode/lib/libcurl.a" \
-	"/tmp/${CURL_VERSION}-iOS-arm64-bitcode/lib/libcurl.a" \
-	"/tmp/${CURL_VERSION}-iOS-x86_64-bitcode/lib/libcurl.a" \
-	-create -output iOS/lib/libcurl.a
+#lipo \
+	#"/tmp/${CURL_VERSION}-iOS-armv7-bitcode/lib/libcurl.a" \
+	#"/tmp/${CURL_VERSION}-iOS-armv7s-bitcode/lib/libcurl.a" \
+	#"/tmp/${CURL_VERSION}-iOS-arm64-bitcode/lib/libcurl.a" \
+	#"/tmp/${CURL_VERSION}-iOS-x86_64-bitcode/lib/libcurl.a" \
+	#-create -output iOS/lib/libcurl.a
 	
 #"/tmp/${CURL_VERSION}-iOS-i386-bitcode/lib/libcurl.a" \
 
@@ -327,7 +328,9 @@ lipo \
 	"/tmp/${CURL_VERSION}-iOS-armv7s-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-arm64-nobitcode/lib/libcurl.a" \
 	"/tmp/${CURL_VERSION}-iOS-x86_64-nobitcode/lib/libcurl.a" \
-	-create -output iOS/lib/libcurl_nobitcode.a
+	-create -output iOS/lib/libcurl.a
+	
+#-create -output iOS/lib/libcurl_nobitcode.a
 	
 #"/tmp/${CURL_VERSION}-iOS-i386-nobitcode/lib/libcurl.a" \
 }
