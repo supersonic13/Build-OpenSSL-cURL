@@ -22,3 +22,11 @@ https://github.com/sqlcipher/android-database-sqlcipher/tree/gradle
 https://curl.haxx.se/docs/install.html
 https://github.com/curl/curl
 https://scottyab.com/2017/05/how-to-build-and-integrate-openssl-into-your-android-ndk-project/
+https://wiki.openssl.org/index.php/Binaries
+https://www.cryptopp.com/wiki/Android_(Command_Line)#setenv-android.sh
+https://www.cryptopp.com/wiki/Android_(Command_Line)#setenv-android.sh
+https://stackoverflow.com/questions/34532383/how-do-you-set-app-platform-in-gradle-ndk-plug-in-in-android-studio
+https://stackoverflow.com/questions/37122126/whats-the-exact-significance-of-android-ndk-platform-version-compared-to-api-le
+https://stackoverflow.com/users/608639/jww
+https://stackoverflow.com/questions/36083102/android-21-static-build-of-libcurl-with-openssl
+https://stackoverflow.com/questions/33205649/cannot-locate-symbol-tcgetattr-referenced-by-libcrypto-so

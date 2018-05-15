@@ -10,9 +10,9 @@
 # EDIT this section to Select Versions #
 ########################################
 
-OPENSSL="1.0.2h"
+OPENSSL="1.0.2o"
 OPENSSL_ANDROID=$OPENSSL
-LIBCURL="7.54.1"
+LIBCURL="7.58.0"
 NGHTTP2="1.24.0"
 
 ########################################
@@ -199,6 +199,7 @@ fi
 if [ "$BUILD_FOR_ANDROID" == 1 ];then
 	mkdir -p "$ARCHIVE/Android/curl"
 	mkdir -p "$ARCHIVE/Android/openssl"
+	mkdir -p "$ARCHIVE/Android/common"
 
 	#cp curl/lib/*.a $ARCHIVE
 	if [ "$BUILD_CURL" == 1 ];then
@@ -207,6 +208,7 @@ if [ "$BUILD_FOR_ANDROID" == 1 ];then
 	if [ "$BUILD_OPENSSL" == 1 ];then
 		cp -r openssl/Android/* $ARCHIVE/Android/openssl/
 	fi
+	cp -r openssl/Android/common/* $ARCHIVE/Android/common/
 fi
 
 echo "Archiving Mac binaries for curl and openssl..."

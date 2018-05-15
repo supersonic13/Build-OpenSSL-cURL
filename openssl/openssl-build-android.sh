@@ -22,8 +22,8 @@ set -e
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r14b"
-export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r17"
-ANDROID_API=${ANDROID_API:-27}
+export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r16b"
+ANDROID_API=${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -150,7 +150,8 @@ configureAndroid()
 	export STRIP=${NDK_TOOLCHAIN_BASENAME}-strip
 	export CPPFLAGS=${CPPFLAGS:-""}
 	export LIBS=${LIBS:-""}
-	export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -D__ANDROID_API__=${ANDROID_API}"
+	#export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -D__ANDROID_API__=${ANDROID_API}"
+	export CFLAGS="${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64"
 	export CXXFLAGS="${CFLAGS} -std=c++11 -frtti -fexceptions"
 	export LDFLAGS="${ARCH_LINK}"
 	echo "**********************************************"
@@ -183,7 +184,7 @@ buildAndroid()
 
 	## https://github.com/n8fr8/orbot/issues/92 - OpenSSL doesn't support compilation with clang (on Android) yet. You'll have to use GCC
 	#configureAndroid $ARCH $ABI "clang"
-	configureAndroid $ARCH $ABI 
+	configureAndroid $ARCH $ABI "clang" 
 
 	if [[ $OPENSSL_VERSION != openssl-1.1.* ]]; then
 		if [[ $ARCH == "android-armeabi" ]]; then
@@ -233,12 +234,18 @@ buildAndroid()
 	sed -ie "/^DEPFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
 	sed -ie "/^CFLAG= /s/$/ -I\$(ANDROID_DEP_FLAGS)/" "Makefile"
 
-	cp Makefile ../Makefile-openssl
+	#cp Makefile ../Makefile-openssl
 
 	$MAKE_EXE depend >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	$MAKE_EXE build_crypto >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	$MAKE_EXE all >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
 	$MAKE_EXE install_sw >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
+
+	#sed -ie "1i #ifdef IGNORE_THIS_FILE" crypto/ui/ui_openssl.c
+	#sed -ie "\$a#endif" crypto/ui/ui_openssl.c
+	#sed -ie "s/#  define TERMIOS/\/\/#  define TERMIOS/" crypto/ui/ui_openssl.c
+	#sed -ie "s/#   define TERMIOS/\/\/#   define TERMIOS/" crypto/ui/ui_openssl.c
+	#sed -ie "s/#  define TERMIO/\/\/#  define TERMIO/" crypto/ui/ui_openssl.c
 
 
 	#$MAKE_EXE clean >> "/tmp/${OPENSSL_VERSION}-Android-${ABI}.log" 2>&1
@@ -278,6 +285,10 @@ buildAndroid()
 	cp "/tmp/openssl-Android-${ABI}/lib/libcrypto.a" ${OUTPUT_ROOT}/lib
 	cp "/tmp/openssl-Android-${ABI}/lib/libssl.a" ${OUTPUT_ROOT}/lib
 
+	OUTPUT_ROOT_COMMON=Android/common/${ABI}
+	[ -d ${OUTPUT_ROOT_COMMON} ] || mkdir -p ${OUTPUT_ROOT_COMMON}
+	cp "/tmp/openssl-Android-${ABI}/lib/libcrypto.a" ${OUTPUT_ROOT_COMMON}
+	cp "/tmp/openssl-Android-${ABI}/lib/libssl.a" ${OUTPUT_ROOT_COMMON}
 }
 
 buildAndroidLibsOnly()
@@ -291,8 +302,8 @@ buildAndroidLibsOnly()
 
 	echo "Building Android libraries"
 	#buildAndroid "android" "armeabi"
-	buildAndroid "android-armeabi" "armeabi-v7a"
-	#buildAndroid "android64-aarch64" "arm64-v8a"
+	#buildAndroid "android-armeabi" "armeabi-v7a"
+	buildAndroid "android64-aarch64" "arm64-v8a"
 	#buildAndroid "android-x86" "x86"
 	#buildAndroid "android64" "x86_64"
 	#buildAndroid "android-mips" "mips"
