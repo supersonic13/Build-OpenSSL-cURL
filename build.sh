@@ -209,6 +209,7 @@ if [ "$BUILD_FOR_ANDROID" == 1 ];then
 		cp -r openssl/Android/* $ARCHIVE/Android/openssl/
 	fi
 	cp -r openssl/Android/common/* $ARCHIVE/Android/common/
+	cp -r curl/Android/common/* $ARCHIVE/Android/common/
 fi
 
 echo "Archiving Mac binaries for curl and openssl..."

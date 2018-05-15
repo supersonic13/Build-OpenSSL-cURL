@@ -20,7 +20,9 @@ set -e
 TOOLS_ROOT=`pwd`
 #export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r15c"
 export ANDROID_NDK="/Users/arun/workspace/ndk/android-ndk-r16b"
-ANDROID_API=${ANDROID_API:-21}
+#ANDROID_API=${ANDROID_API:-19}
+ANDROID_API_32BIT=19	#${ANDROID_API:-19}
+ANDROID_API_64BIT=21	#${ANDROID_API:-21}
 ARCHS=("android" "android-armeabi" "android64-aarch64" "android-x86" "android64" "android-mips" "android-mips64")
 ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 NDK=${ANDROID_NDK}
@@ -96,6 +98,7 @@ configureAndroid()
 		NDK_FLAGS="--arch=arm"
 		export SYSTEM="android"
 		export MACHINE=armv7
+		export ANDROID_API=$ANDROID_API_32BIT
 	elif [ "$ARCH" == "android-armeabi" ]; then
 		export ARCH_FLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -mfpu=neon"
 		export ARCH_LINK="-march=armv7-a -Wl,--fix-cortex-a8"
@@ -103,6 +106,7 @@ configureAndroid()
 		NDK_FLAGS="--arch=arm"
 		export SYSTEM="android"
 		export MACHINE=armv7
+		export ANDROID_API=$ANDROID_API_32BIT
 	elif [ "$ARCH" == "android64-aarch64" ]; then
 		export ARCH_FLAGS=""
 		export ARCH_LINK=""
@@ -110,6 +114,7 @@ configureAndroid()
 		NDK_FLAGS="--arch=arm64"
 		export SYSTEM="android"
 		export MACHINE=aarch64
+		export ANDROID_API=$ANDROID_API_64BIT
 	elif [ "$ARCH" == "android-x86" ]; then
 		export ARCH_FLAGS="-march=i686 -mtune=intel -msse3 -mfpmath=sse -m32"
 		export ARCH_LINK=""
@@ -117,6 +122,7 @@ configureAndroid()
 		NDK_FLAGS="--arch=x86"
 		export MACHINE=i686
 		export SYSTEM="android"
+		export ANDROID_API=$ANDROID_API_32BIT
 	elif [ "$ARCH" == "android64" ]; then
 		export ARCH_FLAGS="-march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel"
 		export ARCH_LINK=""
@@ -124,6 +130,7 @@ configureAndroid()
 		NDK_FLAGS="--arch=x86_64"
 		export MACHINE=i686
 		export SYSTEM="android"
+		export ANDROID_API=$ANDROID_API_64BIT
 	#elif [ "$ARCH" == "android-mips" ]; then
 		#export ARCH_FLAGS=""
 		#export ARCH_LINK=""
@@ -194,6 +201,8 @@ buildAndroid()
 	ARCH=$1; ABI=$2;
 
 	pushd . > /dev/null
+	rm -rf ${CURL_VERSION}
+	tar xfz "${CURL_VERSION}.tar.gz"
 	cd "${CURL_VERSION}"
 
 	## https://github.com/n8fr8/orbot/issues/92 - OpenSSL doesn't support compilation with clang (on Android) yet. You'll have to use GCC
@@ -271,11 +280,11 @@ buildAndroidLibsOnly()
 	#ABIS=("armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64" "mips" "mips64")
 
 	echo "Building Android libraries"
-	#buildAndroid "android" "armeabi"
-	#buildAndroid "android-armeabi" "armeabi-v7a"
+	buildAndroid "android" "armeabi"
+	buildAndroid "android-armeabi" "armeabi-v7a"
 	buildAndroid "android64-aarch64" "arm64-v8a"
-	#buildAndroid "android-x86" "x86"
-	#buildAndroid "android64" "x86_64"
+	buildAndroid "android-x86" "x86"
+	buildAndroid "android64" "x86_64"
 	
 	#buildAndroid "android-mips" "mips"
 	#buildAndroid "android-mips64" "mips64"
