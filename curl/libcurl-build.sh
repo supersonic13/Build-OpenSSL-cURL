@@ -44,9 +44,9 @@ while getopts "h?v:a:q" opt; do
 done
 
 if [ "$VER_NUMBER" == "" ]; then
-	CURL_VERSION="openssl-1.0.1t"
+	CURL_VERSION="curl-7.54.0"
 else
-	CURL_VERSION="openssl-$VER_NUMBER"
+	CURL_VERSION="curl-$VER_NUMBER"
 fi
 
 
