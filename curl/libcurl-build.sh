@@ -221,7 +221,7 @@ buildTVOS()
 	export CROSS_SDK="${PLATFORM}${TVOS_SDK_VERSION}.sdk"
 	export BUILD_TOOLS="${DEVELOPER}"
 	export CC="${BUILD_TOOLS}/usr/bin/gcc"
-	export CFLAGS="-arch ${ARCH} -pipe -Os -gdwarf-2 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -mtvos-version-min=${TVOS_MIN_SDK_VERSION}"
+	export CFLAGS="-arch ${ARCH} -pipe -Os -gdwarf-2 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -mtvos-version-min=${TVOS_MIN_SDK_VERSION} -fembed-bitcode"
 	export LDFLAGS="-arch ${ARCH} -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -L${OPENSSL}/tvOS/lib ${NGHTTP2LIB}"
 #	export PKG_CONFIG_PATH 
    
